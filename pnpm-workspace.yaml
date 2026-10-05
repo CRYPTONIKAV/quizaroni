@@ -1,20 +1,31 @@
 packages:
-    - 'apps/*'
-    - 'packages/*'
-overrides:
-    dompurify: ^3.4.13
-    js-yaml: ^4.3.2
-    nanoid: ^3.3.17
-    brace-expansion: ^5.0.9
-    fast-uri: ^3.1.6
-    undici: ^7.29.0
-    postcss: ^8.5.18
-    vite@*: 'catalog:'
+  - 'apps/*'
+  - 'packages/*'
 catalog:
-    vite: npm:@voidzero-dev/vite-plus-core@0.3.3
-    vite-plus: 0.3.3
+  vite: npm:@voidzero-dev/vite-plus-core@0.3.3
+  vite-plus: 0.3.3
+overrides:
+  brace-expansion: ^5.0.9
+  brace-expansion@>=4.0.0 <5.0.10: '>=5.0.10'
+  brace-expansion@>=4.0.0 <5.0.11: '>=5.0.11'
+  brace-expansion@>=4.0.0 <5.0.12: '>=5.0.12'
+  dompurify: ^3.4.13
+  dompurify@>=3.4.13 <=3.4.15: '>=3.4.16'
+  fast-uri: ^3.1.6
+  js-yaml: ^4.3.2
+  nanoid: ^3.3.17
+  postcss: ^8.5.18
+  serialize-javascript@>=7.1.1 <7.1.2: '>=7.1.2'
+  undici: ^7.29.0
+  undici@>=7.0.0 <7.29.1: '>=7.29.1'
+  undici@>=7.1.0 <7.29.1: '>=7.29.1'
+  undici@>=7.11.0 <7.29.1: '>=7.29.1'
+  undici@>=7.15.0 <7.29.1: '>=7.29.1'
+  undici@>=7.24.1 <7.29.1: '>=7.29.1'
+  undici@>=7.28.0 <7.29.1: '>=7.29.1'
+  vite@*: 'catalog:'
 peerDependencyRules:
-    allowAny:
-        - vite
-    allowedVersions:
-        vite: '*'
+  allowAny:
+    - vite
+  allowedVersions:
+    vite: '*'
