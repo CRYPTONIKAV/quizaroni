@@ -64,6 +64,7 @@ Run from the root:
 | ----------------- | ---------------------------------------- |
 | `pnpm dev:web`    | Start the frontend dev server            |
 | `pnpm build`      | Build all workspaces                     |
+| `pnpm typecheck`  | Type-check the frontend                  |
 | `pnpm synth:api`  | Synthesize the CDK CloudFormation output |
 | `pnpm deploy:api` | Deploy the backend to AWS                |
 | `pnpm test`       | Run tests across workspaces              |
