@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Paper } from '@mui/material/';
 import { useLogto } from '@logto/react';
 import { PAGE_TITLES, POST_SIGN_IN_REDIRECT_KEY } from 'shared/constants';
@@ -12,6 +13,7 @@ type Props = {};
 // it redirects to its own hosted sign-in page. This view's only job is to
 // kick off that redirect; /callback (Callback.tsx) picks the user back up.
 const Login = (props: Props) => {
+    const { t } = useTranslation('auth');
     useBrowserTitle(PAGE_TITLES.LOGIN);
     const { signIn, isAuthenticated } = useLogto();
     const location = useLocation();
@@ -35,7 +37,7 @@ const Login = (props: Props) => {
             <Paper elevation={6}>
                 <LoginContainer>
                     <LoginTitle variant="h5">
-                        Redirecting to sign in...
+                        {t('redirectingToSignIn')}
                     </LoginTitle>
                 </LoginContainer>
             </Paper>

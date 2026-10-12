@@ -51,15 +51,6 @@ export const LOGIN_ERROR_MSG = 'Could not login, check email and password';
 export const LOGOUT_SUCCESS_MSG = 'Successfully logged out!';
 export const LOGOUT_ERROR_MSG = 'Error when logging out';
 
-export const LOGIN_MESSAGES = {
-    createSet:
-        'Please login or create an account to start creating flash cards!',
-    login: "You're already logged in!",
-    signup: 'Please log out of your account to create a new account!',
-    profile: 'Please login to view your profile!',
-    home: 'Please login to view your created flash cards!',
-};
-
 export const FLASHSET_COLUMNS = {
     TITLE: 'Title',
     DESCRIPTION: 'Description',
