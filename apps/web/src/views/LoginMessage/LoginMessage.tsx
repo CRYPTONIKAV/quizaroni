@@ -1,6 +1,6 @@
 import macaroniDance from 'resources/images/macaroni_dance.gif';
-import { LOGIN_MESSAGES } from 'shared/constants';
 import { Card, Typography } from '@mui/material/';
+import { useTranslation } from 'react-i18next';
 
 type Props = {
     page: string;
@@ -8,6 +8,17 @@ type Props = {
 
 const LoginMessage = (props: Props) => {
     const { page } = props;
+    const { t } = useTranslation('auth');
+    const key =
+        (
+            {
+                createSet: 'messages.createSet',
+                login: 'messages.alreadyLoggedIn',
+                signup: 'messages.logoutToSignup',
+                profile: 'messages.loginToViewProfile',
+                home: 'messages.loginToViewHome',
+            } as Record<string, string>
+        )[page] ?? page;
 
     const messageStyling = {
         position: 'absolute',
@@ -26,7 +37,7 @@ const LoginMessage = (props: Props) => {
     return (
         <Card sx={messageStyling} raised>
             <Typography variant="h5" style={{ fontWeight: 'bold' }}>
-                {LOGIN_MESSAGES[page]}
+                {t(key)}
             </Typography>
             <img src={macaroniDance} alt="Macaroni dancing" />
         </Card>

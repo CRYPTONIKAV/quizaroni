@@ -52,6 +52,8 @@ export const LOGOUT_SUCCESS_MSG = 'Successfully logged out!';
 export const LOGOUT_ERROR_MSG = 'Error when logging out';
 
 export const LOGIN_MESSAGES = {
+    // DEPRECATED: migrated to the auth namespace (i18n/locales/{en,es}/auth.json).
+    // Kept for reference; new code must use useTranslation('auth').
     createSet:
         'Please login or create an account to start creating flash cards!',
     login: "You're already logged in!",
