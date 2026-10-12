@@ -23,6 +23,7 @@ import {
 } from './styles';
 import PrintPreview from './PrintPreview';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'react-toastify';
 
 type Props = {
     open: boolean;
@@ -92,7 +93,7 @@ const PrintDialog = ({ open, onClose, studyset }: Props) => {
             doc.save(filename);
         } catch (error) {
             console.error('PDF generation failed:', error);
-            alert(t('dialogs.print.failedToGenerate'));
+            toast.error(t('dialogs.print.failedToGenerate'));
         } finally {
             setIsGenerating(false);
         }

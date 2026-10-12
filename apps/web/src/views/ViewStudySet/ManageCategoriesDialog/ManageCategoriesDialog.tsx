@@ -9,6 +9,7 @@ import {
     useEffect,
 } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'react-toastify';
 import { useUpdateStudyset } from 'state/api/studysetsAPI';
 import AssignTabView from './AssignTabView';
 import { CategoriesCreateTab } from './CategoriesCreateTab';
@@ -349,7 +350,7 @@ const ManageCategoriesDialog = (props: Props) => {
         );
 
         if (unusedCategories.length === 0) {
-            alert(t('categories.noUnusedCategories'));
+            toast.error(t('categories.noUnusedCategories'));
             return;
         }
 
