@@ -20,6 +20,7 @@ import SettingsDialog from './shared/SettingsDialog';
 import { BasePage } from 'styles/AppStyles';
 import { useShortcuts } from 'shared/keyboard/useShortcuts';
 import useHaptics from 'shared/hooks/useHaptics';
+import { useTranslation } from 'react-i18next';
 
 type Props = {
     studysetId: string;
@@ -34,6 +35,7 @@ type MatchCard = {
 };
 
 const MatchingStudy = ({ studysetId }: Props) => {
+    const { t } = useTranslation('study');
     const { data: studysetResponse, isLoading } = useGetStudyset({
         studysetUUID: studysetId,
     });
@@ -321,7 +323,7 @@ const MatchingStudy = ({ studysetId }: Props) => {
     ) {
         return (
             <BasePage>
-                <Typography>Loading...</Typography>
+                <Typography>{t('matching.loading')}</Typography>
             </BasePage>
         );
     }
@@ -330,7 +332,7 @@ const MatchingStudy = ({ studysetId }: Props) => {
     if (termCards.length === 0 || definitionCards.length === 0) {
         return (
             <BasePage>
-                <Typography>Loading...</Typography>
+                <Typography>{t('matching.loading')}</Typography>
             </BasePage>
         );
     }
@@ -368,11 +370,15 @@ const MatchingStudy = ({ studysetId }: Props) => {
                     }}
                 >
                     <Typography variant="body2" color="text.secondary">
-                        Time: {Math.floor(timeElapsed / 60)}:
-                        {(timeElapsed % 60).toString().padStart(2, '0')}
+                        {t('matching.time', {
+                            time: `${Math.floor(timeElapsed / 60)}:${(timeElapsed % 60).toString().padStart(2, '0')}`,
+                        })}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                        Matched: {matchedPairs.size}/{termCards.length}
+                        {t('matching.matched', {
+                            matched: matchedPairs.size,
+                            total: termCards.length,
+                        })}
                     </Typography>
                 </Box>
                 <LinearProgress
@@ -418,7 +424,7 @@ const MatchingStudy = ({ studysetId }: Props) => {
                             mb: '0.5rem',
                         }}
                     >
-                        Terms
+                        {t('matching.terms')}
                     </Typography>
                     {termCards.map((card, index) => (
                         <Grow in key={card.id} timeout={300 + index * 50}>
@@ -516,7 +522,7 @@ const MatchingStudy = ({ studysetId }: Props) => {
                             mb: '0.5rem',
                         }}
                     >
-                        Definitions
+                        {t('matching.definitions')}
                     </Typography>
                     {definitionCards.map((card, index) => (
                         <Grow in key={card.id} timeout={300 + index * 50}>

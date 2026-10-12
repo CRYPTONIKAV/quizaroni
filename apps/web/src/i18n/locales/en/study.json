@@ -117,5 +117,49 @@
         "newAchievements": "🎉 New Achievements Unlocked!",
         "backToSet": "Back to Set",
         "studyAgain": "Study Again"
+    },
+    "header": {
+        "backToStudySet": "Back to Study Set",
+        "streak": "{{count}} Streak",
+        "score": "Score: {{score}}",
+        "progress": "Card {{current}} of {{total}}",
+        "audioOn": "Audio On",
+        "audioOff": "Audio Off",
+        "settings": "Settings"
+    },
+    "matching": {
+        "loading": "Loading...",
+        "time": "Time: {{time}}",
+        "matched": "Matched: {{matched}}/{{total}}",
+        "terms": "Terms",
+        "definitions": "Definitions"
+    },
+    "multipleChoice": {
+        "loading": "Loading...",
+        "correctFeedback": "✓ Correct! Great job!",
+        "incorrectFeedback": "✗ Incorrect. The correct answer was: \"{{answer}}\"",
+        "submitAnswer": "Submit Answer",
+        "optionPlaceholder": "Option {{n}}"
+    },
+    "settings": {
+        "title": "Study Settings",
+        "cardSection": "Card Settings",
+        "shuffleCards": "Shuffle Cards",
+        "autoAdvance": "Auto-Advance to Next Card",
+        "hideImages": "Hide Card Images",
+        "audioSection": "Audio Settings",
+        "tts": "Enable Text-to-Speech (TTS)",
+        "timerSection": "Timer Settings",
+        "timedMode": "Enable Timed Mode",
+        "timePerCard": "Time per Card: {{seconds}} seconds",
+        "difficultySection": "Difficulty Level",
+        "difficultyEasy": "Easy",
+        "difficultyMedium": "Medium",
+        "difficultyHard": "Hard",
+        "difficultyEasyDesc": "More lenient answer matching, more hints available",
+        "difficultyMediumDesc": "Balanced answer matching and hint availability",
+        "difficultyHardDesc": "Strict answer matching, fewer hints available",
+        "cancel": "Cancel",
+        "saveSettings": "Save Settings"
     }
 }

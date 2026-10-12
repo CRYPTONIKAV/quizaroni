@@ -117,5 +117,49 @@
         "newAchievements": "🎉 ¡Nuevos Logros Desbloqueados!",
         "backToSet": "Volver al Set",
         "studyAgain": "Estudiar de Nuevo"
+    },
+    "header": {
+        "backToStudySet": "Volver al conjunto de estudio",
+        "streak": "Racha de {{count}}",
+        "score": "Puntos: {{score}}",
+        "progress": "Tarjeta {{current}} de {{total}}",
+        "audioOn": "Audio activado",
+        "audioOff": "Audio desactivado",
+        "settings": "Ajustes"
+    },
+    "matching": {
+        "loading": "Cargando...",
+        "time": "Tiempo: {{time}}",
+        "matched": "Emparejadas: {{matched}}/{{total}}",
+        "terms": "Términos",
+        "definitions": "Definiciones"
+    },
+    "multipleChoice": {
+        "loading": "Cargando...",
+        "correctFeedback": "✓ ¡Correcto! ¡Buen trabajo!",
+        "incorrectFeedback": "✗ Incorrecto. La respuesta correcta era: \"{{answer}}\"",
+        "submitAnswer": "Enviar respuesta",
+        "optionPlaceholder": "Opción {{n}}"
+    },
+    "settings": {
+        "title": "Ajustes de estudio",
+        "cardSection": "Ajustes de tarjetas",
+        "shuffleCards": "Mezclar tarjetas",
+        "autoAdvance": "Avanzar automáticamente",
+        "hideImages": "Ocultar imágenes",
+        "audioSection": "Ajustes de audio",
+        "tts": "Activar lectura de texto (TTS)",
+        "timerSection": "Ajustes de temporizador",
+        "timedMode": "Activar modo contrarreloj",
+        "timePerCard": "Tiempo por tarjeta: {{seconds}} segundos",
+        "difficultySection": "Nivel de dificultad",
+        "difficultyEasy": "Fácil",
+        "difficultyMedium": "Media",
+        "difficultyHard": "Difícil",
+        "difficultyEasyDesc": "Coincidencias más permisivas, más pistas disponibles",
+        "difficultyMediumDesc": "Coincidencias y pistas equilibradas",
+        "difficultyHardDesc": "Coincidencias estrictas, menos pistas disponibles",
+        "cancel": "Cancelar",
+        "saveSettings": "Guardar ajustes"
     }
 }

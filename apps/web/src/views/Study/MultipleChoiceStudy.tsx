@@ -23,6 +23,7 @@ import SettingsDialog from './shared/SettingsDialog';
 import { BasePage } from 'styles/AppStyles';
 import { useShortcuts } from 'shared/keyboard/useShortcuts';
 import useHaptics from 'shared/hooks/useHaptics';
+import { useTranslation } from 'react-i18next';
 
 type Props = {
     studysetId: string;
@@ -34,6 +35,7 @@ type QuizOption = {
 };
 
 const MultipleChoiceStudy = ({ studysetId }: Props) => {
+    const { t } = useTranslation('study');
     const { data: studysetResponse, isLoading } = useGetStudyset({
         studysetUUID: studysetId,
     });
@@ -140,7 +142,7 @@ const MultipleChoiceStudy = ({ studysetId }: Props) => {
         // Fill with placeholders if not enough cards
         while (options.length < 4) {
             options.push({
-                text: `Option ${options.length + 1}`,
+                text: t('multipleChoice.optionPlaceholder', { n: options.length + 1 }),
                 isCorrect: false,
             });
         }
@@ -316,7 +318,7 @@ const MultipleChoiceStudy = ({ studysetId }: Props) => {
     ) {
         return (
             <BasePage>
-                <Typography>Loading...</Typography>
+                <Typography>{t('multipleChoice.loading')}</Typography>
             </BasePage>
         );
     }
@@ -423,8 +425,12 @@ const MultipleChoiceStudy = ({ studysetId }: Props) => {
                                         sx={{ mb: '2rem' }}
                                     >
                                         {isCorrect
-                                            ? '✓ Correct! Great job!'
-                                            : `✗ Incorrect. The correct answer was: "${quizOptions[correctIndex]?.text}"`}
+                                            ? t('multipleChoice.correctFeedback')
+                                            : t('multipleChoice.incorrectFeedback', {
+                                                  answer:
+                                                      quizOptions[correctIndex]?.text ??
+                                                      '',
+                                              })}
                                     </Alert>
                                 </motion.div>
                             )}
@@ -555,7 +561,7 @@ const MultipleChoiceStudy = ({ studysetId }: Props) => {
                                     disabled={selectedOption === null}
                                     sx={{ minWidth: '10rem' }}
                                 >
-                                    Submit Answer
+                                    {t('multipleChoice.submitAnswer')}
                                 </Button>
                             </Box>
                         )}

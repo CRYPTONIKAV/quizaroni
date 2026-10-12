@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 import { Settings as SettingsIcon } from "@mui/icons-material";
 import { StudySessionSettings } from "shared/types";
+import { useTranslation } from "react-i18next";
 
 type Props = {
   open: boolean;
@@ -23,6 +24,12 @@ type Props = {
 };
 
 const SettingsDialog = ({ open, settings, onClose, onSave }: Props) => {
+  const { t } = useTranslation("study");
+  const difficultyLabels: Record<"easy" | "medium" | "hard", string> = {
+    easy: t("settings.difficultyEasy"),
+    medium: t("settings.difficultyMedium"),
+    hard: t("settings.difficultyHard"),
+  };
   const [localSettings, setLocalSettings] =
     useState<StudySessionSettings>(settings);
 
@@ -86,7 +93,7 @@ const SettingsDialog = ({ open, settings, onClose, onSave }: Props) => {
         >
           <SettingsIcon sx={{ color: "primary.main" }} />
           <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            Study Settings
+            {t("settings.title")}
           </Typography>
         </Box>
       </DialogTitle>
@@ -107,7 +114,7 @@ const SettingsDialog = ({ open, settings, onClose, onSave }: Props) => {
               color="text.secondary"
               sx={{ mb: "1rem" }}
             >
-              Card Settings
+              {t("settings.cardSection")}
             </Typography>
             <Box
               sx={{
@@ -124,7 +131,7 @@ const SettingsDialog = ({ open, settings, onClose, onSave }: Props) => {
                     color="primary"
                   />
                 }
-                label="Shuffle Cards"
+                label={t("settings.shuffleCards")}
               />
               <FormControlLabel
                 control={
@@ -134,7 +141,7 @@ const SettingsDialog = ({ open, settings, onClose, onSave }: Props) => {
                     color="primary"
                   />
                 }
-                label="Auto-Advance to Next Card"
+                label={t("settings.autoAdvance")}
               />
               <FormControlLabel
                 control={
@@ -144,7 +151,7 @@ const SettingsDialog = ({ open, settings, onClose, onSave }: Props) => {
                     color="primary"
                   />
                 }
-                label="Hide Card Images"
+                label={t("settings.hideImages")}
               />
             </Box>
           </Box>
@@ -158,7 +165,7 @@ const SettingsDialog = ({ open, settings, onClose, onSave }: Props) => {
               color="text.secondary"
               sx={{ mb: "1rem" }}
             >
-              Audio Settings
+              {t("settings.audioSection")}
             </Typography>
             <FormControlLabel
               control={
@@ -168,7 +175,7 @@ const SettingsDialog = ({ open, settings, onClose, onSave }: Props) => {
                   color="primary"
                 />
               }
-              label="Enable Text-to-Speech (TTS)"
+              label={t("settings.tts")}
             />
           </Box>
 
@@ -181,7 +188,7 @@ const SettingsDialog = ({ open, settings, onClose, onSave }: Props) => {
               color="text.secondary"
               sx={{ mb: "1rem" }}
             >
-              Timer Settings
+              {t("settings.timerSection")}
             </Typography>
             <FormControlLabel
               control={
@@ -191,13 +198,15 @@ const SettingsDialog = ({ open, settings, onClose, onSave }: Props) => {
                   color="primary"
                 />
               }
-              label="Enable Timed Mode"
+              label={t("settings.timedMode")}
             />
 
             {localSettings.timedMode && (
               <Box sx={{ mt: "1.5rem", px: "0.5rem" }}>
                 <Typography variant="body2" gutterBottom>
-                  Time per Card: {localSettings.timePerCard || 30} seconds
+                  {t("settings.timePerCard", {
+                    seconds: localSettings.timePerCard || 30,
+                  })}
                 </Typography>
                 <Slider
                   value={localSettings.timePerCard || 30}
@@ -231,7 +240,7 @@ const SettingsDialog = ({ open, settings, onClose, onSave }: Props) => {
               color="text.secondary"
               sx={{ mb: "1rem" }}
             >
-              Difficulty Level
+              {t("settings.difficultySection")}
             </Typography>
             <Box
               sx={{
@@ -253,7 +262,7 @@ const SettingsDialog = ({ open, settings, onClose, onSave }: Props) => {
                     textTransform: "capitalize",
                   }}
                 >
-                  {difficulty}
+                  {difficultyLabels[difficulty]}
                 </Button>
               ))}
             </Box>
@@ -263,11 +272,11 @@ const SettingsDialog = ({ open, settings, onClose, onSave }: Props) => {
               sx={{ display: "block", mt: "0.5rem" }}
             >
               {localSettings.difficulty === "easy" &&
-                "More lenient answer matching, more hints available"}
+                t("settings.difficultyEasyDesc")}
               {localSettings.difficulty === "medium" &&
-                "Balanced answer matching and hint availability"}
+                t("settings.difficultyMediumDesc")}
               {localSettings.difficulty === "hard" &&
-                "Strict answer matching, fewer hints available"}
+                t("settings.difficultyHardDesc")}
             </Typography>
           </Box>
         </Box>
@@ -275,10 +284,10 @@ const SettingsDialog = ({ open, settings, onClose, onSave }: Props) => {
 
       <DialogActions sx={{ px: "1.5rem", pb: "1rem" }}>
         <Button onClick={handleCancel} variant="outlined">
-          Cancel
+          {t("settings.cancel")}
         </Button>
         <Button onClick={handleSave} variant="contained">
-          Save Settings
+          {t("settings.saveSettings")}
         </Button>
       </DialogActions>
     </Dialog>
