@@ -90,7 +90,10 @@ const SetModificationButtons = ({
             sx={{ gap: hideButtonTextQuery ? '0.5rem' : undefined }}
         >
             <Tooltip title={t('create.keyboardShortcuts')}>
-                <IconButton onClick={handleOpenShortcutsMenu}>
+                <IconButton
+                    onClick={handleOpenShortcutsMenu}
+                    aria-label={t('create.keyboardShortcuts')}
+                >
                     <KeyboardRounded color="primary" fontSize="medium" />
                 </IconButton>
             </Tooltip>
@@ -117,6 +120,7 @@ const SetModificationButtons = ({
             <IconButton
                 onClick={onToggleExpanded}
                 title={`${expandButtonTitle}`}
+                aria-label={`${expandButtonTitle}`}
             >
                 {expanded ? (
                     <KeyboardArrowLeftRounded fontSize="medium" />
@@ -128,7 +132,10 @@ const SetModificationButtons = ({
                 <>
                     <Tooltip title={t('create.importCards')}>
                         {hideButtonTextQuery ? (
-                            <IconButton onClick={onImportClick}>
+                            <IconButton
+                                onClick={onImportClick}
+                                aria-label={t('create.importCards')}
+                            >
                                 <UploadFile color="primary" fontSize="medium" />
                             </IconButton>
                         ) : (
@@ -143,7 +150,10 @@ const SetModificationButtons = ({
                     </Tooltip>
                     <Tooltip title={t('create.swapAll')}>
                         {hideButtonTextQuery ? (
-                            <IconButton onClick={onSwapAllClick}>
+                            <IconButton
+                                onClick={onSwapAllClick}
+                                aria-label={t('create.swapAll')}
+                            >
                                 <SwapHoriz color="primary" fontSize="medium" />
                             </IconButton>
                         ) : (
@@ -158,7 +168,10 @@ const SetModificationButtons = ({
                     </Tooltip>
                     <Tooltip title={t('create.reverseCards')}>
                         {hideButtonTextQuery ? (
-                            <IconButton onClick={onReverseClick}>
+                            <IconButton
+                                onClick={onReverseClick}
+                                aria-label={t('create.reverseCards')}
+                            >
                                 <Sync color="primary" fontSize="medium" />
                             </IconButton>
                         ) : (

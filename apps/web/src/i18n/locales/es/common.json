@@ -496,6 +496,8 @@
         "addLabelsPlaceholder": "Escribe y presiona Enter para agregar etiquetas",
         "saveChanges": "Guardar Cambios",
         "advanced": "Avanzado",
+        "collapseAdvanced": "Contraer avanzado",
+        "expandAdvanced": "Expandir avanzado",
         "addBlankCards": "Agregar tarjetas en blanco:",
         "add": "Agregar",
         "clearEmptyCards": "Eliminar tarjetas vacías:",
@@ -664,5 +666,10 @@
         "install": "Instalar",
         "installIosInstructions": "Toca Compartir y luego \"Agregar a pantalla de inicio\" para instalar Quizaroni.",
         "dismissInstall": "Descartar aviso de instalación"
+    },
+    "combineSets": {
+        "goBack": "Atrás",
+        "removeSet": "Eliminar {{title}} de la combinación",
+        "addSet": "Agregar {{title}} a la combinación"
     }
 }

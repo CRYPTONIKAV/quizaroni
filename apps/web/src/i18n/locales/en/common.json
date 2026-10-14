@@ -496,6 +496,8 @@
         "addLabelsPlaceholder": "Type and press Enter to add labels",
         "saveChanges": "Save Changes",
         "advanced": "Advanced",
+        "collapseAdvanced": "Collapse advanced",
+        "expandAdvanced": "Expand advanced",
         "addBlankCards": "Add blank cards:",
         "add": "Add",
         "clearEmptyCards": "Clear empty cards:",
@@ -664,5 +666,10 @@
         "install": "Install",
         "installIosInstructions": "Tap Share, then \"Add to Home Screen\" to install Quizaroni.",
         "dismissInstall": "Dismiss install prompt"
+    },
+    "combineSets": {
+        "goBack": "Go back",
+        "removeSet": "Remove {{title}} from combination",
+        "addSet": "Add {{title}} to combination"
     }
 }

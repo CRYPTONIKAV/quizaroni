@@ -143,6 +143,7 @@ const ImagePreview = ({
                                 size="small"
                                 sx={{ color: 'white' }}
                                 title="Delete image"
+                                aria-label="Delete image"
                             >
                                 <DeleteIcon />
                             </IconButton>
@@ -152,6 +153,7 @@ const ImagePreview = ({
                                     size="small"
                                     sx={{ color: 'white' }}
                                     title="Replace image"
+                                    aria-label="Replace image"
                                 >
                                     <SwapIcon />
                                 </IconButton>
