@@ -323,7 +323,7 @@ const MatchingStudy = ({ studysetId }: Props) => {
     ) {
         return (
             <BasePage>
-                <Typography>{t('matching.loading')}</Typography>
+                <Typography>{t('loading')}</Typography>
             </BasePage>
         );
     }
@@ -332,7 +332,7 @@ const MatchingStudy = ({ studysetId }: Props) => {
     if (termCards.length === 0 || definitionCards.length === 0) {
         return (
             <BasePage>
-                <Typography>{t('matching.loading')}</Typography>
+                <Typography>{t('loading')}</Typography>
             </BasePage>
         );
     }

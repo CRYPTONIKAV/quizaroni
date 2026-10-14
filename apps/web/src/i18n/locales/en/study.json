@@ -55,7 +55,8 @@
         "nextCard": "Next Card",
         "previousCard": "Previous Card",
         "shuffle": "Shuffle",
-        "showHint": "Show Hint"
+        "showHint": "Show Hint",
+        "submitAnswer": "Submit Answer"
     },
     "progress": {
         "cardsStudied": "Cards Studied",
@@ -87,8 +88,8 @@
         "ratePrompt": "How well did you recall this?"
     },
     "addCardsToUnlock": "Add cards to unlock this mode",
+    "loading": "Loading...",
     "typeWriteStudy": {
-        "loading": "Loading...",
         "typeDefinitionBelow": "Type the definition below:",
         "answerPlaceholder": "Enter your answer...",
         "useHint": "Use Hint ({{remaining}} remaining)",
@@ -96,7 +97,6 @@
         "hint1FirstLetter": "Hint 1: First letter is \"{{letter}}\"",
         "hint2FirstThree": "Hint 2: First 3 letters are \"{{letters}}\"",
         "hint3Length": "Hint 3: Length is {{count}} characters",
-        "submitAnswer": "Submit Answer",
         "difficultyLine": "Difficulty: {{level}} | Press Enter to submit",
         "difficultyEasy": "easy",
         "difficultyMedium": "medium",
@@ -128,17 +128,14 @@
         "settings": "Settings"
     },
     "matching": {
-        "loading": "Loading...",
         "time": "Time: {{time}}",
         "matched": "Matched: {{matched}}/{{total}}",
         "terms": "Terms",
         "definitions": "Definitions"
     },
     "multipleChoice": {
-        "loading": "Loading...",
         "correctFeedback": "✓ Correct! Great job!",
         "incorrectFeedback": "✗ Incorrect. The correct answer was: \"{{answer}}\"",
-        "submitAnswer": "Submit Answer",
         "optionPlaceholder": "Option {{n}}"
     },
     "settings": {
@@ -159,7 +156,7 @@
         "difficultyEasyDesc": "More lenient answer matching, more hints available",
         "difficultyMediumDesc": "Balanced answer matching and hint availability",
         "difficultyHardDesc": "Strict answer matching, fewer hints available",
-        "cancel": "Cancel",
-        "saveSettings": "Save Settings"
+        "saveSettings": "Save Settings",
+        "secondsShort": "{{seconds}}s"
     }
 }

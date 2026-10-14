@@ -32,6 +32,8 @@ type Props = {
 type QuizOption = {
     text: string;
     isCorrect: boolean;
+    // Translated at render time so placeholders follow language changes
+    placeholderNumber?: number;
 };
 
 const MultipleChoiceStudy = ({ studysetId }: Props) => {
@@ -142,8 +144,9 @@ const MultipleChoiceStudy = ({ studysetId }: Props) => {
         // Fill with placeholders if not enough cards
         while (options.length < 4) {
             options.push({
-                text: t('multipleChoice.optionPlaceholder', { n: options.length + 1 }),
+                text: '',
                 isCorrect: false,
+                placeholderNumber: options.length + 1,
             });
         }
 
@@ -318,7 +321,7 @@ const MultipleChoiceStudy = ({ studysetId }: Props) => {
     ) {
         return (
             <BasePage>
-                <Typography>{t('multipleChoice.loading')}</Typography>
+                <Typography>{t('loading')}</Typography>
             </BasePage>
         );
     }
@@ -534,7 +537,14 @@ const MultipleChoiceStudy = ({ studysetId }: Props) => {
                                                                     : 400,
                                                         }}
                                                     >
-                                                        {option.text}
+                                                        {option.placeholderNumber
+                                                            ? t(
+                                                                  'multipleChoice.optionPlaceholder',
+                                                                  {
+                                                                      n: option.placeholderNumber,
+                                                                  },
+                                                              )
+                                                            : option.text}
                                                     </Typography>
                                                 }
                                                 sx={{ width: '100%', m: 0 }}
@@ -561,7 +571,7 @@ const MultipleChoiceStudy = ({ studysetId }: Props) => {
                                     disabled={selectedOption === null}
                                     sx={{ minWidth: '10rem' }}
                                 >
-                                    {t('multipleChoice.submitAnswer')}
+                                    {t('actions.submitAnswer')}
                                 </Button>
                             </Box>
                         )}

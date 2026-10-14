@@ -214,12 +214,10 @@ const SettingsDialog = ({ open, settings, onClose, onSave }: Props) => {
                   min={10}
                   max={120}
                   step={5}
-                  marks={[
-                    { value: 10, label: "10s" },
-                    { value: 30, label: "30s" },
-                    { value: 60, label: "60s" },
-                    { value: 120, label: "120s" },
-                  ]}
+                  marks={[10, 30, 60, 120].map((seconds) => ({
+                    value: seconds,
+                    label: t("settings.secondsShort", { seconds }),
+                  }))}
                   valueLabelDisplay="auto"
                   sx={{
                     "& .MuiSlider-markLabel": {
@@ -259,7 +257,6 @@ const SettingsDialog = ({ open, settings, onClose, onSave }: Props) => {
                   onClick={() => handleDifficultyChange(difficulty)}
                   sx={{
                     flex: 1,
-                    textTransform: "capitalize",
                   }}
                 >
                   {difficultyLabels[difficulty]}
@@ -284,7 +281,7 @@ const SettingsDialog = ({ open, settings, onClose, onSave }: Props) => {
 
       <DialogActions sx={{ px: "1.5rem", pb: "1rem" }}>
         <Button onClick={handleCancel} variant="outlined">
-          {t("settings.cancel")}
+          {t("buttons.cancel", { ns: "common" })}
         </Button>
         <Button onClick={handleSave} variant="contained">
           {t("settings.saveSettings")}
