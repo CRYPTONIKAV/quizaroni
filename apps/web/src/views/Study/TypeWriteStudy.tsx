@@ -268,7 +268,7 @@ const TypeWriteStudy = ({ studysetId }: Props) => {
     ) {
         return (
             <BasePage>
-                <Typography>{t('typeWriteStudy.loading')}</Typography>
+                <Typography>{t('loading')}</Typography>
             </BasePage>
         );
     }
@@ -461,7 +461,7 @@ const TypeWriteStudy = ({ studysetId }: Props) => {
                                         disabled={!userAnswer.trim()}
                                         sx={{ minWidth: '10rem' }}
                                     >
-                                        {t('typeWriteStudy.submitAnswer')}
+                                        {t('actions.submitAnswer')}
                                     </Button>
                                 </Box>
                             )}

@@ -23,6 +23,7 @@ import SettingsDialog from './shared/SettingsDialog';
 import { BasePage } from 'styles/AppStyles';
 import { useShortcuts } from 'shared/keyboard/useShortcuts';
 import useHaptics from 'shared/hooks/useHaptics';
+import { useTranslation } from 'react-i18next';
 
 type Props = {
     studysetId: string;
@@ -31,9 +32,12 @@ type Props = {
 type QuizOption = {
     text: string;
     isCorrect: boolean;
+    // Translated at render time so placeholders follow language changes
+    placeholderNumber?: number;
 };
 
 const MultipleChoiceStudy = ({ studysetId }: Props) => {
+    const { t } = useTranslation('study');
     const { data: studysetResponse, isLoading } = useGetStudyset({
         studysetUUID: studysetId,
     });
@@ -140,8 +144,9 @@ const MultipleChoiceStudy = ({ studysetId }: Props) => {
         // Fill with placeholders if not enough cards
         while (options.length < 4) {
             options.push({
-                text: `Option ${options.length + 1}`,
+                text: '',
                 isCorrect: false,
+                placeholderNumber: options.length + 1,
             });
         }
 
@@ -316,7 +321,7 @@ const MultipleChoiceStudy = ({ studysetId }: Props) => {
     ) {
         return (
             <BasePage>
-                <Typography>Loading...</Typography>
+                <Typography>{t('loading')}</Typography>
             </BasePage>
         );
     }
@@ -423,8 +428,12 @@ const MultipleChoiceStudy = ({ studysetId }: Props) => {
                                         sx={{ mb: '2rem' }}
                                     >
                                         {isCorrect
-                                            ? '✓ Correct! Great job!'
-                                            : `✗ Incorrect. The correct answer was: "${quizOptions[correctIndex]?.text}"`}
+                                            ? t('multipleChoice.correctFeedback')
+                                            : t('multipleChoice.incorrectFeedback', {
+                                                  answer:
+                                                      quizOptions[correctIndex]?.text ??
+                                                      '',
+                                              })}
                                     </Alert>
                                 </motion.div>
                             )}
@@ -528,7 +537,14 @@ const MultipleChoiceStudy = ({ studysetId }: Props) => {
                                                                     : 400,
                                                         }}
                                                     >
-                                                        {option.text}
+                                                        {option.placeholderNumber
+                                                            ? t(
+                                                                  'multipleChoice.optionPlaceholder',
+                                                                  {
+                                                                      n: option.placeholderNumber,
+                                                                  },
+                                                              )
+                                                            : option.text}
                                                     </Typography>
                                                 }
                                                 sx={{ width: '100%', m: 0 }}
@@ -555,7 +571,7 @@ const MultipleChoiceStudy = ({ studysetId }: Props) => {
                                     disabled={selectedOption === null}
                                     sx={{ minWidth: '10rem' }}
                                 >
-                                    Submit Answer
+                                    {t('actions.submitAnswer')}
                                 </Button>
                             </Box>
                         )}

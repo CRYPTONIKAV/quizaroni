@@ -9,6 +9,7 @@ import {
     Tooltip,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 type Props = {
     studysetTitle: string;
@@ -34,6 +35,7 @@ const StudyHeader = ({
     onSettings,
 }: Props) => {
     const navigate = useNavigate();
+    const { t } = useTranslation('study');
     const progress = totalCards > 0 ? (currentCard / totalCards) * 100 : 0;
 
     const handleBack = () => {
@@ -63,7 +65,7 @@ const StudyHeader = ({
                 <Box
                     sx={{ display: 'flex', alignItems: 'center', gap: '1rem' }}
                 >
-                    <Tooltip title="Back to Study Set">
+                    <Tooltip title={t('header.backToStudySet')}>
                         <IconButton onClick={handleBack} color="primary">
                             <ArrowBack />
                         </IconButton>
@@ -111,7 +113,7 @@ const StudyHeader = ({
                                 variant="body1"
                                 sx={{ fontWeight: 600 }}
                             >
-                                {streak} Streak
+                                {t('header.streak', { count: streak })}
                             </Typography>
                         </Box>
                     )}
@@ -129,12 +131,12 @@ const StudyHeader = ({
                         }}
                     >
                         <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                            Score: {score}
+                            {t('header.score', { score })}
                         </Typography>
                     </Box>
 
                     <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                        Card {currentCard} of {totalCards}
+                        {t('header.progress', { current: currentCard, total: totalCards })}
                     </Typography>
                 </Box>
 
@@ -145,7 +147,7 @@ const StudyHeader = ({
                         gap: '0.5rem',
                     }}
                 >
-                    <Tooltip title={audioEnabled ? 'Audio On' : 'Audio Off'}>
+                    <Tooltip title={t(audioEnabled ? 'header.audioOn' : 'header.audioOff')}>
                         <IconButton
                             onClick={onToggleAudio}
                             color={audioEnabled ? 'primary' : 'default'}
@@ -153,7 +155,7 @@ const StudyHeader = ({
                             <VolumeUp />
                         </IconButton>
                     </Tooltip>
-                    <Tooltip title="Settings">
+                    <Tooltip title={t('header.settings')}>
                         <IconButton onClick={onSettings}>
                             <Settings />
                         </IconButton>
