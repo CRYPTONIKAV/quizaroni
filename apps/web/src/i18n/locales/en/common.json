@@ -320,6 +320,7 @@
         "nameCannotBeEmpty": "Name cannot be empty",
         "categoryAlreadyExists": "Category already exists",
         "noUnusedCategories": "No unused categories to delete",
+        "deleteUnusedFailed": "Failed to delete unused categories. Please try again.",
         "noCategoriesYet": "No categories yet",
         "createFirstCategory": "Use the input above to create your first category",
         "cardCount_one": "{{count}} card",

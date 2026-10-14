@@ -371,11 +371,12 @@ const ManageCategoriesDialog = (props: Props) => {
                     setIsUpdating(false);
                 },
                 onError: () => {
+                    toast.error(t('categories.deleteUnusedFailed'));
                     setIsUpdating(false);
                 },
             }
         );
-    }, [studysetUUID, categories, cards, updateStudySet]);
+    }, [studysetUUID, categories, cards, updateStudySet, t]);
 
     return (
         <MetadataDialogShell
