@@ -7,7 +7,11 @@ import type {
     StudyStatistics,
     Achievement,
 } from 'shared/types';
-import { computeSm2, newProgress } from 'shared/utilities/srs';
+import {
+    gradeFromQuality,
+    newProgress,
+    reviewCard,
+} from 'shared/utilities/srs';
 import { cardProgressRepository } from 'state/local/repositories';
 import { useGamificationStore } from './gamification';
 
@@ -27,7 +31,7 @@ type StudySessionStore = {
     updateStreak: (correct: boolean) => void;
     resetSession: () => void;
 
-    // Progress management (SM-2 algorithm)
+    // Progress management (FSRS algorithm)
     updateCardProgress: (cardUUID: string, quality: number) => void;
 
     // Statistics
@@ -160,7 +164,7 @@ export const useStudySessionStore = create<StudySessionStore>()(
 
             resetSession: () => set({ activeSession: null }),
 
-            // SM-2 spaced repetition — pure math in shared/utilities/srs,
+            // FSRS spaced repetition — pure math in shared/utilities/srs,
             // persisted to Dexie via cardProgressRepository (local-first).
             updateCardProgress: (cardUUID, quality) => {
                 const studysetUUID = get().activeSession?.studysetUUID;
@@ -170,7 +174,7 @@ export const useStudySessionStore = create<StudySessionStore>()(
                     const existing =
                         await cardProgressRepository.getByCard(cardUUID);
                     const prev = existing ?? newProgress(cardUUID);
-                    const updated = computeSm2(prev, quality);
+                    const updated = reviewCard(prev, gradeFromQuality(quality));
                     await cardProgressRepository.upsert(updated, studysetUUID);
                 })();
             },

@@ -1,10 +1,14 @@
 import { getDatabase, type LocalCardProgress } from '../db';
 import type { CardProgress, UUID } from 'shared/types';
+import {
+    migrateProgressToFsrs,
+    type LegacySm2Progress,
+} from 'shared/utilities/srs';
 
 const LEGACY_KEY = 'study-session-storage';
 const MIGRATION_FLAG = 'srs-progress-migrated-v1';
 
-// Repository for SM-2 card progress - always hits local Dexie DB.
+// Repository for FSRS card progress - always hits local Dexie DB.
 // Local-only for now (no backend sync); rows are marked pending for a future sync layer.
 export class CardProgressRepository {
     private db = getDatabase();
@@ -82,18 +86,20 @@ export class CardProgressRepository {
             if (raw) {
                 const parsed = JSON.parse(raw);
                 // zustand persist shape: { state: { cardProgress: [[uuid, progress], ...] } }
-                const entries: [string, CardProgress][] =
+                const entries: [string, LegacySm2Progress][] =
                     parsed?.state?.cardProgress ?? [];
                 const rows: LocalCardProgress[] = entries
                     .map(([, p]) => p)
                     .filter((p) => p && p.cardUUID)
-                    .map((p) => ({
-                        ...p,
-                        // studysetUUID was not tracked in the legacy Map; mark unknown.
-                        studysetUUID: '',
-                        _syncStatus: 'pending' as const,
-                        _lastModified: Date.now(),
-                    }));
+                    .map((p) =>
+                        migrateProgressToFsrs({
+                            ...p,
+                            // studysetUUID was not tracked in the legacy Map; mark unknown.
+                            studysetUUID: '',
+                            _syncStatus: 'pending' as const,
+                            _lastModified: Date.now(),
+                        })
+                    );
                 if (rows.length > 0) {
                     await this.db.cardProgress.bulkPut(rows);
                 }
