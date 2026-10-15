@@ -54,6 +54,7 @@
         "flipCard": "Flip Card",
         "nextCard": "Next Card",
         "previousCard": "Previous Card",
+        "finish": "Finish",
         "shuffle": "Shuffle",
         "showHint": "Show Hint",
         "submitAnswer": "Submit Answer"

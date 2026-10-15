@@ -54,6 +54,7 @@
         "flipCard": "Voltear Tarjeta",
         "nextCard": "Siguiente Tarjeta",
         "previousCard": "Tarjeta Anterior",
+        "finish": "Terminar",
         "shuffle": "Mezclar",
         "showHint": "Mostrar Pista",
         "submitAnswer": "Enviar respuesta"

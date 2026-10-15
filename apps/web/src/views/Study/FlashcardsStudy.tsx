@@ -567,11 +567,12 @@ const FlashcardsStudy = ({ studysetId, reviewMode = false }: Props) => {
                     }}
                 >
                     {/* Previous Button */}
-                    <Tooltip title="Previous Card">
+                    <Tooltip title={t('actions.previousCard')}>
                         <span>
                             <IconButton
                                 onClick={handlePrevious}
                                 disabled={isFirstCard}
+                                aria-label={t('actions.previousCard')}
                                 color="primary"
                                 sx={{ fontSize: '3rem' }}
                             >
@@ -848,11 +849,22 @@ const FlashcardsStudy = ({ studysetId, reviewMode = false }: Props) => {
                     </AnimatePresence>
 
                     {/* Next Button */}
-                    <Tooltip title={isLastCard ? 'Finish' : 'Next Card'}>
+                    <Tooltip
+                        title={
+                            isLastCard
+                                ? t('actions.finish')
+                                : t('actions.nextCard')
+                        }
+                    >
                         <span>
                             <IconButton
                                 onClick={handleNext}
                                 disabled={!hasRated}
+                                aria-label={
+                                    isLastCard
+                                        ? t('actions.finish')
+                                        : t('actions.nextCard')
+                                }
                                 color="primary"
                                 sx={{ fontSize: '3rem' }}
                             >
