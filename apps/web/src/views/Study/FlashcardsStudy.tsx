@@ -884,33 +884,39 @@ const FlashcardsStudy = ({ studysetId, reviewMode = false }: Props) => {
                     paddingBottom: 'max(0.5rem, var(--safe-area-bottom))',
                 }}
             >
-                <Tooltip title="Flip Card">
-                    <IconButton
-                        onClick={handleFlip}
-                        color="primary"
-                        size="large"
-                    >
-                        <Replay fontSize="inherit" />
-                    </IconButton>
+                <Tooltip title={t('actions.flipCard')}>
+                    <span>
+                        <IconButton
+                            onClick={handleFlip}
+                            color="primary"
+                            size="large"
+                            aria-label={t('actions.flipCard')}
+                        >
+                            <Replay fontSize="inherit" />
+                        </IconButton>
+                    </span>
                 </Tooltip>
                 <Tooltip
                     title={
                         activeSession.settings.audioEnabled
-                            ? 'Audio On'
-                            : 'Audio Off'
+                            ? t('header.audioOn')
+                            : t('header.audioOff')
                     }
                 >
-                    <IconButton
-                        onClick={handleAudioToggle}
-                        color="primary"
-                        size="large"
-                    >
-                        {activeSession.settings.audioEnabled ? (
-                            <VolumeUp fontSize="inherit" />
-                        ) : (
-                            <VolumeOff fontSize="inherit" />
-                        )}
-                    </IconButton>
+                    <span>
+                        <IconButton
+                            onClick={handleAudioToggle}
+                            color="primary"
+                            size="large"
+                            aria-label={t(activeSession.settings.audioEnabled ? 'header.audioOn' : 'header.audioOff')}
+                        >
+                            {activeSession.settings.audioEnabled ? (
+                                <VolumeUp fontSize="inherit" />
+                            ) : (
+                                <VolumeOff fontSize="inherit" />
+                            )}
+                        </IconButton>
+                    </span>
                 </Tooltip>
             </Box>
 
