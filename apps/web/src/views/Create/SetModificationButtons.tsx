@@ -91,6 +91,14 @@ const SetModificationButtons = ({
         >
             <Tooltip title={t('create.keyboardShortcuts')}>
                 <IconButton
+                    id="keyboard-shortcuts-button"
+                    aria-controls={
+                        keyboardShortcutsOpen
+                            ? 'keyboard-shortcuts-menu'
+                            : undefined
+                    }
+                    aria-haspopup="true"
+                    aria-expanded={keyboardShortcutsOpen ? 'true' : undefined}
                     onClick={handleOpenShortcutsMenu}
                     aria-label={t('create.keyboardShortcuts')}
                 >
@@ -98,12 +106,12 @@ const SetModificationButtons = ({
                 </IconButton>
             </Tooltip>
             <Menu
-                id="keyboard-shortcuts-menu"
                 anchorEl={anchorEl}
                 open={keyboardShortcutsOpen}
                 onClose={handleCloseShortcutsMenu}
                 MenuListProps={{
-                    'aria-labelledby': 'basic-button',
+                    id: 'keyboard-shortcuts-menu',
+                    'aria-labelledby': 'keyboard-shortcuts-button',
                 }}
                 disableScrollLock
             >
