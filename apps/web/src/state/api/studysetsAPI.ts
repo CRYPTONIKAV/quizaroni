@@ -645,8 +645,8 @@ export const useBatchUpdateStudysetLabels = () => {
                 context: 'BatchUpdateStudysetLabels',
             });
         },
-        onSuccess: () => {
-            // Invalidate all studysets queries to refresh data
+        onSettled: () => {
+            // Invalidate on error too: a partial failure (non-2xx) may still have updated some sets
             queryClient.invalidateQueries({
                 queryKey: ['studysets'],
             });
