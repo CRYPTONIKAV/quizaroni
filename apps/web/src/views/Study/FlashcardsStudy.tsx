@@ -884,7 +884,7 @@ const FlashcardsStudy = ({ studysetId, reviewMode = false }: Props) => {
                     paddingBottom: 'max(0.5rem, var(--safe-area-bottom))',
                 }}
             >
-                <Tooltip title="Flip Card">
+                <Tooltip title={t('actions.flipCard')}>
                     <IconButton
                         onClick={handleFlip}
                         color="primary"
@@ -896,8 +896,8 @@ const FlashcardsStudy = ({ studysetId, reviewMode = false }: Props) => {
                 <Tooltip
                     title={
                         activeSession.settings.audioEnabled
-                            ? 'Audio On'
-                            : 'Audio Off'
+                            ? t('header.audioOn')
+                            : t('header.audioOff')
                     }
                 >
                     <IconButton
