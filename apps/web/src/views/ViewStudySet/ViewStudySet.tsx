@@ -98,15 +98,25 @@ const ViewStudySet = (props: Props) => {
     useGetAllStudysets();
   const studysets = studysetsResponse?.studysets ?? [];
 
-  const { data: studysetResponse, isLoading: isStudySetLoading } =
-    useGetStudyset({ studysetUUID });
+  // Always refetch on mount so the lastViewed gate below never trusts a cached
+  // copy of a set that has since been deleted.
+  const {
+    data: studysetResponse,
+    isLoading: isStudySetLoading,
+    isSuccess: isStudySetSuccess,
+    isFetchedAfterMount: isStudySetFetchedAfterMount,
+  } = useGetStudyset({ studysetUUID }, { refetchOnMount: "always" });
   const selectedStudyset = studysetResponse?.studyset ?? ({} as Studyset);
+  const isOwnedSetLoaded =
+    isStudySetSuccess &&
+    isStudySetFetchedAfterMount &&
+    studysetResponse?.studyset?.studysetUUID === studysetUUID;
 
   const { mutate: updateStudySet } = useUpdateStudyset();
 
   useBrowserTitle(selectedStudyset?.title ?? "");
 
-  const updatedViewTimestamp = useRef<boolean>(false);
+  const lastViewedRecordedFor = useRef<string | null>(null);
   const studyModeIconStyle = {
     fontSize: "5rem",
   };
@@ -123,18 +133,17 @@ const ViewStudySet = (props: Props) => {
     selectedStudyset?.metadata?.viewSetLayout ?? VIEWSET_LAYOUTS.LIST,
   );
 
+  // The owner fetch only returns sets in the caller's library; an update for
+  // any other id upserts an empty stub into it (#127).
   useEffect(() => {
-    if (!updatedViewTimestamp.current && studysetUUID) {
-      const updates = {
-        lastViewed: new Date().toISOString(),
-      };
-      updateStudySet({
-        studysetUUID,
-        updates,
-      });
-      updatedViewTimestamp.current = true;
-    }
-  }, [studysetUUID]);
+    if (!studysetUUID || !isOwnedSetLoaded) return;
+    if (lastViewedRecordedFor.current === studysetUUID) return;
+    updateStudySet({
+      studysetUUID,
+      updates: { lastViewed: new Date().toISOString() },
+    });
+    lastViewedRecordedFor.current = studysetUUID;
+  }, [studysetUUID, isOwnedSetLoaded]);
 
   // Sync drawer initial state from metadata. On narrow screens the drawer is a
   // temporary overlay, so keep it closed on load instead of covering the page.
@@ -158,7 +167,7 @@ const ViewStudySet = (props: Props) => {
   useEffect(() => {
     if (
       viewMode &&
-      selectedStudyset?.studysetUUID &&
+      isOwnedSetLoaded &&
       selectedStudyset?.metadata?.viewSetLayout !== viewMode
     ) {
       updateMetadataField("viewSetLayout", viewMode);

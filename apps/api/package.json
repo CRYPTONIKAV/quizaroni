@@ -11,7 +11,8 @@
 		"test": "jest",
 		"cdk": "cdk",
 		"backfill:public-gsi": "ts-node scripts/backfillPublicGsi.ts",
-		"migrate:logto-user": "ts-node scripts/migrateUserToLogto.ts"
+		"migrate:logto-user": "ts-node scripts/migrateUserToLogto.ts",
+		"cleanup:empty-studysets": "ts-node scripts/cleanupEmptyStudysets.ts"
 	},
 	"dependencies": {
 		"@quizaroni/shared-types": "workspace:*",
