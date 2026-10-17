@@ -131,38 +131,36 @@ const ImagePreview = ({
                     <Typography variant="caption">Failed to load</Typography>
                 </BrokenImageContainer>
             ) : (
-                <>
-                    <ImageElement
-                        src={file.signedURL}
-                        alt={file.name}
-                        onError={() => setImageError(true)}
-                        loading="lazy"
-                    />
-                    {!isDeleting && (
-                        <ActionOverlay data-preview-actions="">
-                            <IconButton
-                                onClick={handleDelete}
-                                size="small"
-                                sx={{ color: 'white' }}
-                                title="Delete image"
-                                aria-label="Delete image"
-                            >
-                                <DeleteIcon />
-                            </IconButton>
-                            {onReplace && (
-                                <IconButton
-                                    onClick={handleReplace}
-                                    size="small"
-                                    sx={{ color: 'white' }}
-                                    title="Replace image"
-                                    aria-label="Replace image"
-                                >
-                                    <SwapIcon />
-                                </IconButton>
-                            )}
-                        </ActionOverlay>
+                <ImageElement
+                    src={file.signedURL}
+                    alt={file.name}
+                    onError={() => setImageError(true)}
+                    loading="lazy"
+                />
+            )}
+            {!isDeleting && (
+                <ActionOverlay data-preview-actions="">
+                    <IconButton
+                        onClick={handleDelete}
+                        size="small"
+                        sx={{ color: 'white' }}
+                        title="Delete image"
+                        aria-label="Delete image"
+                    >
+                        <DeleteIcon />
+                    </IconButton>
+                    {onReplace && (
+                        <IconButton
+                            onClick={handleReplace}
+                            size="small"
+                            sx={{ color: 'white' }}
+                            title="Replace image"
+                            aria-label="Replace image"
+                        >
+                            <SwapIcon />
+                        </IconButton>
                     )}
-                </>
+                </ActionOverlay>
             )}
             {isDeleting && (
                 <LoadingContainer>

@@ -227,6 +227,21 @@ const NewCardInput = ({
             );
             updateCardValue(index, 'files', updatedFiles);
             setDeleteConfirmKey(null);
+            // After the deleted image unmounts, move focus somewhere sensible:
+            // the next image's Delete button, or the card's file input when
+            // no images are left (keyboard delete otherwise drops focus to
+            // <body>).
+            setTimeout(() => {
+                const deleteBtn = document.querySelector<HTMLButtonElement>(
+                    '[aria-label="Delete image"]'
+                );
+                if (deleteBtn) {
+                    deleteBtn.focus();
+                    return;
+                }
+                (termFileInputRef.current ?? definitionFileInputRef.current)
+                    ?.focus();
+            }, 0);
         }
     };
 
