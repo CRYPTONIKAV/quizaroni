@@ -7,12 +7,15 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { S3Client } from '@aws-sdk/client-s3';
 import { Studyset } from 'models/studysets';
-import { removeKeys } from 'resources/dynamo/utilities';
 import {
     PUBLIC_GSI_INDEX_NAME,
     PUBLIC_STUDYSET_PK,
     publicStudysetSK,
 } from 'resources/dynamo/publicSharing';
+import {
+    PublicStudysetSource,
+    toPublicStudyset,
+} from 'utilities/publicStudyset';
 import { regenerateSignedUrls } from 'utilities/studysets';
 
 const { mainTable = '', mainBucket = '' } = process.env;
@@ -64,17 +67,19 @@ export const handler: Handler = async (
             return notFound();
         }
 
-        // Regenerate signed URLs for any card attachments before we drop keys.
+        // Regenerate signed URLs for any card attachments before the storage
+        // keys are dropped.
         const studysetWithFreshUrls = await regenerateSignedUrls({
             s3Client,
             bucket: mainBucket,
             studyset: studyset as Studyset,
         });
 
-        // Strip DynamoDB keys and the internal owner id; `username` stays for
-        // the "created by" attribution shown on the public page.
-        const sanitized = removeKeys(studysetWithFreshUrls) as Partial<Studyset>;
-        delete sanitized.userUUID;
+        // Built from an explicit allowlist: notes, labels, categories, owner
+        // ids and storage keys never leave.
+        const publicStudyset = toPublicStudyset(
+            studysetWithFreshUrls as PublicStudysetSource
+        );
 
         return {
             statusCode: 200,
@@ -86,7 +91,7 @@ export const handler: Handler = async (
             },
             body: JSON.stringify({
                 message: 'Successfully retrieved public study set',
-                studyset: sanitized,
+                studyset: publicStudyset,
             }),
         };
     } catch (error) {

@@ -475,6 +475,8 @@
         "createdBy": "Creado por {{username}}",
         "term": "Término",
         "definition": "Definición",
+        "termImage": "Imagen del término",
+        "definitionImage": "Imagen de la definición",
         "cards_one": "{{count}} tarjeta",
         "cards_other": "{{count}} tarjetas",
         "ctaTitle": "¿Quieres estudiar este set?",

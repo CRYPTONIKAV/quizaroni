@@ -12,8 +12,34 @@ import {
 import { School as SchoolIcon } from '@mui/icons-material/';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useParams } from 'react-router-dom';
-import { useGetPublicStudyset } from 'state/api/studysetsAPI';
+import {
+    GetPublicStudysetResponse,
+    useGetPublicStudyset,
+} from 'state/api/studysetsAPI';
 import useBrowserTitle from 'hooks/useBrowserTitle';
+import ImageGallery from 'components/ImageGallery/ImageGallery';
+import { CardFileMetadata } from 'shared/types';
+
+type PublicCardFiles =
+    GetPublicStudysetResponse['studyset']['cards'][number]['files'];
+
+// The public payload has no storage key or filename, so key by position plus
+// URL (a refreshed URL resets ImageGallery's error state) and label
+// generically. `files` can be missing when an older API response fails
+// validation and reaches the view raw.
+const toGalleryFiles = (
+    files: PublicCardFiles | undefined,
+    association: CardFileMetadata['association'],
+    name: string
+): CardFileMetadata[] =>
+    (files ?? [])
+        .filter((file) => file.association === association)
+        .map((file, index) => ({
+            ...file,
+            key: `${association}-${index}-${file.signedURL}`,
+            name,
+            size: 0,
+        }));
 
 /**
  * Read-only, unauthenticated view of a publicly-shared study set. This is what
@@ -59,7 +85,6 @@ const PublicStudySet = () => {
     }
 
     const cards = studyset.cards ?? [];
-    const labels = studyset.labels ?? [];
 
     return (
         <Container maxWidth="md" sx={{ py: 4 }}>
@@ -95,16 +120,13 @@ const PublicStudySet = () => {
                         color="primary"
                         variant="outlined"
                     />
-                    {labels.map((label) => (
-                        <Chip key={label} label={label} variant="outlined" />
-                    ))}
                 </Stack>
             </Paper>
 
             <Stack spacing={2}>
                 {cards.map((card, index) => (
                     <Paper
-                        key={card.cardUUID ?? index}
+                        key={index}
                         variant="outlined"
                         sx={{ p: { xs: 2, sm: 3 } }}
                     >
@@ -114,6 +136,14 @@ const PublicStudySet = () => {
                         <Typography variant="h6" sx={{ mb: 1.5 }}>
                             {card.term}
                         </Typography>
+                        <ImageGallery
+                            files={toGalleryFiles(
+                                card.files,
+                                'term',
+                                t('publicView.termImage')
+                            )}
+                            maxHeight="7rem"
+                        />
                         <Divider sx={{ mb: 1.5 }} />
                         <Typography variant="overline" color="text.secondary">
                             {t('publicView.definition')}
@@ -124,6 +154,14 @@ const PublicStudySet = () => {
                         >
                             {card.definition}
                         </Typography>
+                        <ImageGallery
+                            files={toGalleryFiles(
+                                card.files,
+                                'definition',
+                                t('publicView.definitionImage')
+                            )}
+                            maxHeight="7rem"
+                        />
                     </Paper>
                 ))}
             </Stack>

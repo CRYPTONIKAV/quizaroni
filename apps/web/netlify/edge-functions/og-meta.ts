@@ -84,9 +84,7 @@ const serveShell = (
 type PublicSet = {
     title?: string;
     description?: string;
-    username?: string;
-    categories?: string[];
-    labels?: string[];
+    username?: string | null;
     cards?: unknown[];
 };
 
@@ -154,12 +152,11 @@ export default async (request: Request, context: Context) => {
 
     const title = escapeHtml(set.title);
     const cardCount = Array.isArray(set.cards) ? set.cards.length : 0;
-    const subject = set.categories?.[0] ?? set.labels?.[0] ?? '';
     const author = set.username ? ` by ${set.username}` : '';
     const description = escapeHtml(
         (set.description && set.description.trim()) ||
-            `${cardCount} flashcard${cardCount === 1 ? '' : 's'}${
-                subject ? ` on ${subject}` : ''
+            `${cardCount} flashcard${
+                cardCount === 1 ? '' : 's'
             }${author} — study free on Quizaroni.`
     );
     const pageTitle = `${title} · Quizaroni`;

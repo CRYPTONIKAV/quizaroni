@@ -209,14 +209,28 @@ export const CreateStudysetResponseSchema = z.object({
     studyset: StudysetSchema,
 });
 
-// Public (unauthenticated) read of a shared set. The public endpoint strips the
-// owner's internal `userUUID`, so it is absent here; `username` stays for
-// "created by" attribution.
-export const PublicStudysetSchema = StudysetSchema.omit({
-    userUUID: true,
-    uuid: true,
-}).extend({
-    uuid: UUIDSchema.optional(),
+// Public (unauthenticated) read of a shared set. An explicit allowlist that
+// mirrors `toPublicStudyset` in `apps/api/utilities/publicStudyset.ts`; the
+// owner's private fields and storage keys are never sent.
+export const PublicCardFileSchema = z.object({
+    association: z.enum(['term', 'definition']),
+    signedURL: SignedURLSchema,
+});
+
+export const PublicCardSchema = z.object({
+    term: z.string(),
+    definition: z.string(),
+    files: z.array(PublicCardFileSchema),
+});
+
+export const PublicStudysetSchema = z.object({
+    title: z.string(),
+    description: z.string(),
+    username: z.string().nullable(),
+    subject: z.string().nullable(),
+    publishedAt: TimestampSchema.nullable(),
+    updatedAt: TimestampSchema.nullable(),
+    cards: z.array(PublicCardSchema),
 });
 
 export const GetPublicStudysetResponseSchema = z.object({
