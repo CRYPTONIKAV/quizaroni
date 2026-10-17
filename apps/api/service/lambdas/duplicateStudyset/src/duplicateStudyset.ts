@@ -9,6 +9,7 @@ import { randomUUID } from "crypto";
 import { AuthorizerContext } from "models/auth";
 import { removeKeys } from "resources/dynamo/utilities";
 import { Studyset } from "models/studysets";
+import { buildDuplicate } from "utilities/duplicateStudyset";
 
 const { mainTable = "" } = process.env;
 
@@ -49,25 +50,7 @@ export const handler: Handler = async (
         const newStudysetUUID = randomUUID();
         const timestamp = new Date().toISOString();
 
-        const duplicatedStudyset = structuredClone(studyset);
-        duplicatedStudyset.SK = `studyset#${newStudysetUUID}`;
-        duplicatedStudyset.title = `${duplicatedStudyset.title} Copy`;
-        duplicatedStudyset.createdAt = timestamp;
-        duplicatedStudyset.updatedAt = timestamp;
-        duplicatedStudyset.studysetUUID = newStudysetUUID;
-        duplicatedStudyset.cards = duplicatedStudyset.cards.map(card => {
-            const newCardUUID = randomUUID();
-            const newNotes = card.notes.map(note => ({
-                ...note,
-                noteUUID: randomUUID()
-            }));
-    
-            return {
-                ...card,
-                cardUUID: newCardUUID,
-                notes: newNotes
-            };
-        });
+        const duplicatedStudyset = buildDuplicate(studyset, newStudysetUUID, timestamp);
 
         const putCommand = new PutCommand({
             TableName: mainTable,
