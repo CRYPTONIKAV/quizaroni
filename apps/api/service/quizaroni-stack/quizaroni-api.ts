@@ -391,7 +391,7 @@ export class QuizaroniAPI extends Construct {
         // Add a policy statement for S3 read and write access
         const s3BucketResources = [`main`, `assets`]
             .map((bucketName) => [
-                `arn:aws:s3:::${bucketName}`,
+                `arn:aws:s3:::${this.prefix}-${bucketName}`,
                 `arn:aws:s3:::${this.prefix}-${bucketName}/*`,
             ])
             .flat();

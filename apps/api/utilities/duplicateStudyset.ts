@@ -7,6 +7,9 @@ import type { Studyset, Timestamp, UUID } from 'models/studysets';
  * state (PK2..SK6 index keys, favorited, updatedBy, and server-owned fields
  * such as subject, publishedAt, featuredAt, saveCount, moderation) never
  * carries over to the copy (#125).
+ *
+ * Card files are copied verbatim, still pointing at the source's S3 objects;
+ * callers must re-key them with `copyCardFiles` before storing the copy (#126).
  */
 export const buildDuplicate = (
     source: Studyset,

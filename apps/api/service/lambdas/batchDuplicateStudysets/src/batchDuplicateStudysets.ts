@@ -4,6 +4,7 @@ import {
     Handler,
 } from 'aws-lambda';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { S3Client } from '@aws-sdk/client-s3';
 import {
     DynamoDBDocumentClient,
     GetCommand,
@@ -14,11 +15,13 @@ import { AuthorizerContext } from 'models/auth';
 import { removeKeys } from 'resources/dynamo/utilities';
 import { Studyset } from 'models/studysets';
 import { buildDuplicate } from 'utilities/duplicateStudyset';
+import { copyCardFiles } from 'utilities/cardFiles';
 
-const { mainTable = '' } = process.env;
+const { mainTable = '', mainBucket = '' } = process.env;
 
 const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
+const s3Client = new S3Client({});
 
 type RequestBody = {
     studysetUUIDs: string[];
@@ -41,7 +44,15 @@ export const handler: Handler = async (
             duplicateIndividualStudyset({ studysetUUID, username, userUUID })
         );
 
-        await Promise.allSettled(duplicateStudysetPromises);
+        const results = await Promise.allSettled(duplicateStudysetPromises);
+        results.forEach((result, i) => {
+            if (result.status === 'rejected') {
+                console.error(
+                    `Failed to duplicate studyset ${studysetUUIDs[i]}:`,
+                    result.reason
+                );
+            }
+        });
 
         return {
             statusCode: 200,
@@ -96,6 +107,13 @@ const duplicateIndividualStudyset = async ({
         newStudysetUUID,
         timestamp
     );
+    duplicatedStudyset.cards = await copyCardFiles({
+        s3Client,
+        bucket: mainBucket,
+        cards: duplicatedStudyset.cards,
+        studysetUUID: newStudysetUUID,
+        ownerUUID: userUUID,
+    });
 
     const putCommand = new PutCommand({
         TableName: mainTable,
