@@ -4,6 +4,8 @@ import { createTheme } from "@mui/material";
 const primaryColor = "#ffa000";
 const primaryHoverColor = "#c67100";
 const primaryLightColor = "#ffd149";
+// #ffa000 is about 2:1 on white, so light mode uses a darker shade for text.
+const primaryTextLight = "#9a5500";
 
 // MUI Typography base configuration with scale multiplier
 const getBaseTypography = (scale: number = 1) => ({
@@ -49,6 +51,7 @@ export const createLightTheme = (fontScale: number = 1) =>
         gold: {
           main: "#FFDF00",
         },
+        primaryText: primaryTextLight,
       },
       text: {
         primary: "rgba(0, 0, 0, 0.87)",
@@ -224,6 +227,7 @@ export const createDarkTheme = (fontScale: number = 1) =>
         gold: {
           main: "#FFDF00",
         },
+        primaryText: primaryColor,
       },
       text: {
         primary: "rgba(255, 255, 255, 0.87)",

@@ -38,7 +38,6 @@ export const PAGE_TITLES = {
     HOME: 'Home',
     LOGIN: 'Login',
     SIGN_UP: 'Sign Up',
-    EXPLORE: 'Explore',
     PROFILE: 'Profile',
 };
 

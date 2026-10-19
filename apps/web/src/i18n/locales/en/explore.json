@@ -1,0 +1,20 @@
+{
+    "title": "Explore",
+    "forYou": {
+        "heading": "For you",
+        "loading": "Loading your sets…",
+        "error": "We couldn't load your sets.",
+        "retry": "Try again"
+    },
+    "tile": {
+        "jumpBackIn": "Jump back in",
+        "untitled": "Untitled set",
+        "cardCount_one": "{{count}} card",
+        "cardCount_other": "{{count}} cards"
+    },
+    "empty": {
+        "heading": "No study sets yet",
+        "body": "Create your first set and it will show up here.",
+        "createSet": "Create set"
+    }
+}
