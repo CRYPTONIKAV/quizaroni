@@ -1,7 +1,7 @@
 import { Box, Button, Skeleton, Typography } from '@mui/material';
 import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ForYouTileData } from './forYou';
+import { ForYouTileData, forYouTileKey } from './forYou';
 import ForYouTile from './ForYouTile';
 import { ForYouGrid, ForYouItem, VisuallyHidden } from './ExploreStyles';
 
@@ -66,7 +66,7 @@ const ForYouSection = ({
         return (
             <ForYouGrid aria-busy="false">
                 {tiles.map((tile, i) => (
-                    <ForYouItem key={tile.studyset.studysetUUID}>
+                    <ForYouItem key={forYouTileKey(tile)}>
                         <ForYouTile tile={tile} index={i} />
                     </ForYouItem>
                 ))}

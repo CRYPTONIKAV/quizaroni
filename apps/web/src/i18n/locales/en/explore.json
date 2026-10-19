@@ -10,7 +10,25 @@
         "jumpBackIn": "Jump back in",
         "untitled": "Untitled set",
         "cardCount_one": "{{count}} card",
-        "cardCount_other": "{{count}} cards"
+        "cardCount_other": "{{count}} cards",
+        "due": {
+            "eyebrow": "Due for review",
+            "title_one": "{{count}} card due across {{sets}}",
+            "title_other": "{{count}} cards due across {{sets}}",
+            "sets_one": "{{count}} set",
+            "sets_other": "{{count}} sets",
+            "local": "On this device",
+            "review": "Review"
+        },
+        "streak": {
+            "eyebrow": "Streak",
+            "title_one": "{{count}}-day streak",
+            "title_other": "{{count}}-day streak",
+            "atRisk_one": "Study today to keep your {{count}}-day streak",
+            "atRisk_other": "Study today to keep your {{count}}-day streak",
+            "studiedToday": "You studied today",
+            "lastStudiedYesterday": "Last studied yesterday"
+        }
     },
     "empty": {
         "heading": "No study sets yet",

@@ -17,6 +17,7 @@ import {
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PRESET_ACHIEVEMENTS } from 'shared/constants';
+import { useEffectiveStreak } from 'shared/hooks/useEffectiveStreak';
 import type { AchievementMetric } from 'shared/types';
 import { useGamificationStore } from 'state/stores/gamification';
 import { AccountViewContainer } from './ProfileStyles';
@@ -31,6 +32,7 @@ const CUSTOM_METRICS: AchievementMetric[] = [
 const AchievementsTab = () => {
     const { t } = useTranslation('profile');
     const state = useGamificationStore((s) => s.state);
+    const { days: currentStreak } = useEffectiveStreak();
     const customAchievements = useGamificationStore((s) => s.customAchievements);
     const addCustomAchievement = useGamificationStore(
         (s) => s.addCustomAchievement
@@ -79,7 +81,7 @@ const AchievementsTab = () => {
                                 <CardContent sx={{ textAlign: 'center' }}>
                                     <Typography variant="h4">🔥</Typography>
                                     <Typography variant="h5" fontWeight={700}>
-                                        {state.currentStreak}
+                                        {currentStreak}
                                     </Typography>
                                     <Typography variant="body2" color="text.secondary">
                                         {t('achievements.currentStreak')}

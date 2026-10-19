@@ -1,7 +1,7 @@
 import { Whatshot } from '@mui/icons-material';
 import { Chip, Tooltip } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import { useGamificationStore } from 'state/stores/gamification';
+import { useEffectiveStreak } from 'shared/hooks/useEffectiveStreak';
 
 type Props = {
     onClick?: () => void;
@@ -9,15 +9,15 @@ type Props = {
 
 const StreakBadge = ({ onClick }: Props) => {
     const { t } = useTranslation('profile');
-    const currentStreak = useGamificationStore((s) => s.state.currentStreak);
+    const { days } = useEffectiveStreak();
 
-    if (currentStreak <= 0) return null;
+    if (days <= 0) return null;
 
     return (
-        <Tooltip title={t('achievements.streakTooltip', { count: currentStreak })}>
+        <Tooltip title={t('achievements.streakTooltip', { count: days })}>
             <Chip
                 icon={<Whatshot sx={{ color: '#FF6B6B !important' }} />}
-                label={currentStreak}
+                label={days}
                 onClick={onClick}
                 clickable={!!onClick}
                 size="small"

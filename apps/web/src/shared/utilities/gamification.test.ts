@@ -4,6 +4,7 @@ import {
     createInitialGamificationState,
     evaluatePresetAchievements,
     getDateKey,
+    getEffectiveStreak,
     getYesterdayKey,
     mergeCustomAchievements,
     mergeGamificationState,
@@ -197,5 +198,57 @@ describe('mergeCustomAchievements', () => {
 
         expect(merged).toHaveLength(1);
         expect(merged[0]?.unlockedAt).toBe('2026-06-02T00:00:00.000Z');
+    });
+});
+
+describe('getEffectiveStreak', () => {
+    const today = new Date('2026-10-18T12:00:00.000Z');
+    const studied = (lastStudyDate: string | null, currentStreak = 5) => ({
+        currentStreak,
+        lastStudyDate,
+    });
+
+    it('keeps the streak when the last study day is today', () => {
+        expect(getEffectiveStreak(studied('2026-10-18'), today)).toEqual({
+            days: 5,
+            atRisk: false,
+        });
+    });
+
+    it('marks the streak at risk when the last study day was yesterday', () => {
+        expect(getEffectiveStreak(studied('2026-10-17'), today)).toEqual({
+            days: 5,
+            atRisk: true,
+        });
+    });
+
+    it.each(['2026-10-16', '2026-09-01'])(
+        'treats a gap of 2+ days (%s) as a broken streak',
+        (lastStudyDate) => {
+            expect(getEffectiveStreak(studied(lastStudyDate), today)).toEqual({
+                days: 0,
+                atRisk: false,
+            });
+        }
+    );
+
+    it('returns no streak without any study history', () => {
+        expect(
+            getEffectiveStreak(createInitialGamificationState(), today)
+        ).toEqual({ days: 0, atRisk: false });
+    });
+
+    it('returns no streak when the stored streak is zero', () => {
+        expect(getEffectiveStreak(studied('2026-10-18', 0), today)).toEqual({
+            days: 0,
+            atRisk: false,
+        });
+    });
+
+    it('treats a study day after today as broken, as updateDailyStreak does', () => {
+        expect(getEffectiveStreak(studied('2026-10-19'), today)).toEqual({
+            days: 0,
+            atRisk: false,
+        });
     });
 });

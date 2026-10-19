@@ -2,8 +2,11 @@ import { describe, it, expect } from 'vite-plus/test';
 import { Studyset } from 'shared/types';
 import {
     composeForYou,
+    DueSummary,
+    forYouTileKey,
     hasCompleteStudysets,
     selectJumpBackIn,
+    summarizeDue,
 } from './forYou';
 
 const makeSet = (id: string, overrides: Partial<Studyset> = {}): Studyset =>
@@ -27,17 +30,22 @@ const ids = (sets: { studysetUUID: string }[]) =>
     sets.map((s) => s.studysetUUID);
 
 describe('composeForYou', () => {
+    const due: DueSummary = { cardCount: 4, setCount: 2, studysetUUID: 'a' };
+    const streak = { days: 3, atRisk: false };
+
     it('orders tiles by priority regardless of source order', () => {
         const tiles = composeForYou(
             {
                 favorite: [makeSet('f')],
                 jumpBackIn: [makeSet('j')],
-                due: [makeSet('d')],
+                streak,
+                due,
             },
             6
         );
         expect(tiles.map((t) => t.kind)).toEqual([
             'due',
+            'streak',
             'jumpBackIn',
             'favorite',
         ]);
@@ -45,8 +53,16 @@ describe('composeForYou', () => {
 
     it('shows each set once, under its highest-priority source', () => {
         const shared = makeSet('a');
-        const tiles = composeForYou({ jumpBackIn: [shared], due: [shared] }, 6);
-        expect(tiles).toEqual([{ kind: 'due', studyset: shared }]);
+        const tiles = composeForYou(
+            { favorite: [shared], jumpBackIn: [shared] },
+            6
+        );
+        expect(tiles).toEqual([{ kind: 'jumpBackIn', studyset: shared }]);
+    });
+
+    it("doesn't let the due tile claim the set it reviews", () => {
+        const tiles = composeForYou({ due, jumpBackIn: [makeSet('a')] }, 6);
+        expect(tiles.map(forYouTileKey)).toEqual(['due', 'a']);
     });
 
     it('caps the total at 6 and at 3', () => {
@@ -60,16 +76,17 @@ describe('composeForYou', () => {
     it('fills the cap across sources', () => {
         const tiles = composeForYou(
             {
-                due: [makeSet('d1'), makeSet('d2')],
+                due,
+                streak,
                 jumpBackIn: ['j1', 'j2', 'j3', 'j4', 'j5'].map((id) =>
                     makeSet(id)
                 ),
             },
             6
         );
-        expect(tiles.map((t) => t.studyset.studysetUUID)).toEqual([
-            'd1',
-            'd2',
+        expect(tiles.map(forYouTileKey)).toEqual([
+            'due',
+            'streak',
             'j1',
             'j2',
             'j3',
@@ -77,22 +94,81 @@ describe('composeForYou', () => {
         ]);
     });
 
+    it('skips a missing due summary and a missing or 0-day streak', () => {
+        const j = makeSet('j');
+        expect(
+            composeForYou({ due: null, streak: null, jumpBackIn: [j] }, 6)
+        ).toEqual([{ kind: 'jumpBackIn', studyset: j }]);
+        expect(
+            composeForYou(
+                { streak: { days: 0, atRisk: false }, jumpBackIn: [j] },
+                6
+            )
+        ).toEqual([{ kind: 'jumpBackIn', studyset: j }]);
+    });
+
     it("keeps each source's own order", () => {
         const tiles = composeForYou(
             { jumpBackIn: [makeSet('z'), makeSet('a'), makeSet('m')] },
             6
         );
-        expect(tiles.map((t) => t.studyset.studysetUUID)).toEqual([
-            'z',
-            'a',
-            'm',
-        ]);
+        expect(tiles.map(forYouTileKey)).toEqual(['z', 'a', 'm']);
     });
 
     it('returns [] for empty sources or cap 0', () => {
         expect(composeForYou({}, 6)).toEqual([]);
         expect(composeForYou({ jumpBackIn: [] }, 6)).toEqual([]);
         expect(composeForYou({ jumpBackIn: [makeSet('a')] }, 0)).toEqual([]);
+        expect(composeForYou({ due, streak }, 0)).toEqual([]);
+    });
+});
+
+describe('summarizeDue', () => {
+    it('returns null when nothing is due', () => {
+        expect(summarizeDue(new Map())).toBeNull();
+        expect(summarizeDue(new Map([['A', 0]]))).toBeNull();
+    });
+
+    it('totals cards and sets and targets the set with the most due', () => {
+        expect(
+            summarizeDue(
+                new Map([
+                    ['A', 2],
+                    ['B', 5],
+                ])
+            )
+        ).toEqual({ cardCount: 7, setCount: 2, studysetUUID: 'B' });
+    });
+
+    it('breaks ties in favour of the earlier set', () => {
+        expect(
+            summarizeDue(
+                new Map([
+                    ['A', 3],
+                    ['B', 3],
+                ])
+            )?.studysetUUID
+        ).toBe('A');
+    });
+});
+
+describe('forYouTileKey', () => {
+    it('keys aggregate tiles by kind and set tiles by set', () => {
+        expect(
+            forYouTileKey({
+                kind: 'due',
+                due: { cardCount: 1, setCount: 1, studysetUUID: 'a' },
+            })
+        ).toBe('due');
+        expect(
+            forYouTileKey({
+                kind: 'streak',
+                streak: { days: 2, atRisk: true },
+            })
+        ).toBe('streak');
+        expect(
+            forYouTileKey({ kind: 'jumpBackIn', studyset: makeSet('a') })
+        ).toBe('a');
     });
 });
 

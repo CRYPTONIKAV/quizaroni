@@ -17,6 +17,7 @@ import {
 import { ThemeProvider } from '@mui/material/styles';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createLightTheme } from 'shared/theme/themes';
+import { getDateKey, getYesterdayKey } from 'shared/utilities/gamification';
 import Explore from './Explore';
 
 const OWNER = '33333333-3333-4333-8333-333333333333';
@@ -24,6 +25,8 @@ const OLDER_ID = '11111111-1111-4111-8111-111111111111';
 const NEWER_ID = '22222222-2222-4222-8222-222222222222';
 
 const createSpy = vi.fn();
+const dueSpy = vi.fn();
+let gam: { currentStreak: number; lastStudyDate: string | null };
 
 vi.mock('react-i18next', () => ({
     useTranslation: () => ({ t: (k: string) => k }),
@@ -49,6 +52,17 @@ vi.mock('react-router-dom', () => {
         NavLink: FakeLink,
     };
 });
+
+vi.mock('state/local/repositories', () => ({
+    cardProgressRepository: {
+        getDueCountsBySet: (...args: unknown[]) => dueSpy(...args),
+    },
+}));
+
+vi.mock('state/stores/gamification', () => ({
+    useGamificationStore: <T,>(sel: (s: { state: typeof gam }) => T) =>
+        sel({ state: gam }),
+}));
 
 vi.mock('hooks/useCreateStudysetAction', () => ({
     useCreateStudysetAction: () => ({
@@ -135,9 +149,31 @@ const allStyles = () =>
 const escapeRegExp = (value: string) =>
     value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+const cssClass = (el: Element) => {
+    const cls = Array.from(el.classList).find((c) => c.startsWith('css-'));
+    expect(cls).toBeTruthy();
+    return escapeRegExp(cls!);
+};
+
+const daysAgo = (n: number) =>
+    getDateKey(new Date(Date.now() - n * 86_400_000));
+
+const stubXs = () =>
+    vi.stubGlobal('matchMedia', (media: string) => ({
+        matches: true,
+        media,
+        addListener() {},
+        removeListener() {},
+        addEventListener() {},
+        removeEventListener() {},
+    }));
+
 describe('Explore', () => {
     beforeEach(() => {
         createSpy.mockClear();
+        dueSpy.mockReset();
+        dueSpy.mockResolvedValue(new Map());
+        gam = { currentStreak: 0, lastStudyDate: null };
         fetchMock.mockClear();
         fetchMock.mockImplementation(() => withSets());
         vi.stubGlobal('fetch', fetchMock);
@@ -192,9 +228,9 @@ describe('Explore', () => {
 
         const list = screen.getByRole('list', { hidden: true });
         expect(list.getAttribute('aria-busy')).toBe('true');
-        // Jump back in is the only source, so at most 3 tiles can load.
+        // At most 5 tiles can load: due, streak and 3 jump back in.
         const items = list.querySelectorAll('li');
-        expect(items).toHaveLength(3);
+        expect(items).toHaveLength(5);
         items.forEach((item) =>
             expect(item.getAttribute('aria-hidden')).toBe('true')
         );
@@ -303,5 +339,154 @@ describe('Explore', () => {
         expect(css).toMatch(
             new RegExp(`\\.${c} ?\\{[^}]*animation: ?[^;}]*backwards`)
         );
+    });
+
+    it('shows a due tile whose Review button opens the set with the most cards due', async () => {
+        dueSpy.mockResolvedValue(
+            new Map([
+                [OLDER_ID, 2],
+                [NEWER_ID, 5],
+            ])
+        );
+        renderExplore();
+
+        const articles = await screen.findAllByRole('article');
+        expect(articles).toHaveLength(3);
+        const due = articles[0]!;
+        expect(due.textContent).toContain('tile.due.eyebrow');
+        const heading = within(due).getByRole('heading', { level: 3 });
+        expect(heading.textContent).toBe('tile.due.title');
+        expect(within(heading).queryByRole('link')).toBeNull();
+        expect(due.textContent).toContain('tile.due.local');
+        const review = within(due).getByRole('link', {
+            name: 'tile.due.review',
+        });
+        expect(review.getAttribute('href')).toBe(`/study/${NEWER_ID}/review`);
+        expect(review.getAttribute('aria-describedby')).toBe(heading.id);
+
+        // Only complete sets are checked; the stub row is left out.
+        const [sets, now] = dueSpy.mock.calls[0]!;
+        expect(
+            (sets as { studysetUUID: string }[]).map((s) => s.studysetUUID)
+        ).toEqual([OLDER_ID, NEWER_ID]);
+        expect(now).toBeInstanceOf(Date);
+    });
+
+    it.each([
+        [
+            'today',
+            () => getDateKey(),
+            'tile.streak.title',
+            'tile.streak.studiedToday',
+        ],
+        [
+            'yesterday',
+            () => getYesterdayKey(),
+            'tile.streak.atRisk',
+            'tile.streak.lastStudiedYesterday',
+        ],
+    ])(
+        'shows the streak tile when the last study day is %s',
+        async (_when, lastStudyDate, title, meta) => {
+            gam = { currentStreak: 4, lastStudyDate: lastStudyDate() };
+            renderExplore();
+
+            const articles = await screen.findAllByRole('article');
+            expect(articles).toHaveLength(3);
+            const streak = articles[0]!;
+            expect(streak.textContent).toContain('tile.streak.eyebrow');
+            expect(
+                within(streak).getByRole('heading', { level: 3 }).textContent
+            ).toBe(title);
+            expect(streak.textContent).toContain(meta);
+            expect(within(streak).queryByRole('link')).toBeNull();
+        }
+    );
+
+    it('leaves out a streak that a missed day has broken', async () => {
+        gam = { currentStreak: 4, lastStudyDate: daysAgo(3) };
+        renderExplore();
+
+        const articles = await screen.findAllByRole('article');
+        expect(articles).toHaveLength(2);
+        expect(screen.queryByText('tile.streak.eyebrow')).toBeNull();
+    });
+
+    it('caps For you at 3 tiles on extra-small screens', async () => {
+        stubXs();
+        dueSpy.mockResolvedValue(new Map([[OLDER_ID, 1]]));
+        gam = { currentStreak: 2, lastStudyDate: getDateKey() };
+        renderExplore();
+
+        const articles = await screen.findAllByRole('article');
+        expect(articles).toHaveLength(3);
+        expect(articles[0]!.textContent).toContain('tile.due.eyebrow');
+        expect(articles[1]!.textContent).toContain('tile.streak.eyebrow');
+        expect(within(articles[2]!).getByRole('link').textContent).toBe(
+            'Newer Set'
+        );
+    });
+
+    it('still shows jump back in when the due lookup fails, and logs why', async () => {
+        const failure = new Error('IndexedDB unavailable');
+        dueSpy.mockRejectedValue(failure);
+        renderExplore();
+
+        const articles = await screen.findAllByRole('article');
+        expect(articles).toHaveLength(2);
+        expect(screen.queryByText('tile.due.eyebrow')).toBeNull();
+        expect(screen.getByRole('list').getAttribute('aria-busy')).toBe(
+            'false'
+        );
+        expect(console.error).toHaveBeenCalledWith(
+            'Failed to count due cards:',
+            failure
+        );
+    });
+
+    it('stays loading until the due lookup finishes', async () => {
+        dueSpy.mockReturnValue(new Promise(() => {}));
+        renderExplore();
+
+        await waitFor(() => expect(dueSpy).toHaveBeenCalled());
+        const list = screen.getByRole('list', { hidden: true });
+        expect(list.getAttribute('aria-busy')).toBe('true');
+        expect(screen.queryByRole('article')).toBeNull();
+    });
+
+    it('gives the Review button a focus ring and no hover lift for reduced motion', async () => {
+        dueSpy.mockResolvedValue(new Map([[NEWER_ID, 1]]));
+        renderExplore();
+
+        const review = await screen.findByRole('link', {
+            name: 'tile.due.review',
+        });
+        const c = cssClass(review);
+        const css = allStyles();
+
+        expect(css).toMatch(
+            new RegExp(
+                `@media \\(prefers-reduced-motion: ?reduce\\) ?\\{[^@]*\\.${c}:hover ?\\{[^}]*transform: ?none`
+            )
+        );
+        expect(css).toMatch(
+            new RegExp(
+                `\\.${c}\\.Mui-focusVisible ?\\{[^}]*outline: ?2px solid`
+            )
+        );
+    });
+
+    it('only lifts tiles that are links on hover', async () => {
+        dueSpy.mockResolvedValue(new Map([[NEWER_ID, 1]]));
+        renderExplore();
+
+        const [due, set] = await screen.findAllByRole('article');
+        const css = allStyles();
+        const lifts = (el: Element) =>
+            new RegExp(
+                `\\.${cssClass(el)}:hover ?\\{[^}]*transform: ?translateY`
+            ).test(css);
+        expect(lifts(set!)).toBe(true);
+        expect(lifts(due!)).toBe(false);
     });
 });

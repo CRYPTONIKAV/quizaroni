@@ -10,7 +10,9 @@ import useBrowserTitle from 'hooks/useBrowserTitle';
 import { useCreateStudysetAction } from 'hooks/useCreateStudysetAction';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useGetAllStudysets } from 'state/api/studysetsAPI';
+import { useDueCountsBySet } from 'shared/hooks/useDueCountsBySet';
+import { useEffectiveStreak } from 'shared/hooks/useEffectiveStreak';
+import { isCompleteStudyset, useGetAllStudysets } from 'state/api/studysetsAPI';
 import { HomeContainer, HomePage, HomePaper } from 'views/Home/HomeStyles';
 import {
     FOR_YOU_CAP,
@@ -18,6 +20,7 @@ import {
     composeForYou,
     hasCompleteStudysets,
     selectJumpBackIn,
+    summarizeDue,
 } from './forYou';
 import ForYouSection from './ForYouSection';
 
@@ -35,13 +38,30 @@ const Explore = () => {
     const { data, isError, refetch } = useGetAllStudysets();
     const { createAndOpen, isPending } = useCreateStudysetAction();
 
+    // Memoised so the due lookup only reruns when the library changes.
+    const librarySets = useMemo(
+        () =>
+            data === undefined
+                ? undefined
+                : Array.isArray(data.studysets)
+                  ? data.studysets.filter(isCompleteStudyset)
+                  : [],
+        [data]
+    );
+    const dueCounts = useDueCountsBySet(librarySets);
+    const { days, atRisk } = useEffectiveStreak();
+
     const tiles = useMemo(
         () =>
             composeForYou(
-                { jumpBackIn: selectJumpBackIn(data?.studysets) },
+                {
+                    due: dueCounts ? summarizeDue(dueCounts) : null,
+                    streak: { days, atRisk },
+                    jumpBackIn: selectJumpBackIn(librarySets),
+                },
                 cap
             ),
-        [data, cap]
+        [dueCounts, days, atRisk, librarySets, cap]
     );
     const hasSets = hasCompleteStudysets(data?.studysets);
 
@@ -83,6 +103,19 @@ const Explore = () => {
                         {t('empty.createSet')}
                     </Button>
                 </Box>
+            );
+        }
+        // Wait for the due tile, which ranks first, so it doesn't push the
+        // other tiles down when it arrives.
+        if (dueCounts === undefined) {
+            return (
+                <ForYouSection
+                    tiles={[]}
+                    isLoading
+                    isError={false}
+                    skeletonCount={skeletonCount}
+                    onRetry={() => void refetch()}
+                />
             );
         }
         return (

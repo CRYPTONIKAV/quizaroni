@@ -1,5 +1,5 @@
 import { getDatabase, type LocalCardProgress } from '../db';
-import type { CardProgress, UUID } from 'shared/types';
+import type { CardProgress, Studyset, UUID } from 'shared/types';
 import {
     migrateProgressToFsrs,
     type LegacySm2Progress,
@@ -49,6 +49,38 @@ export class CardProgressRepository {
     ): Promise<number> {
         const due = await this.getDueForStudyset(studysetUUID, now);
         return due.length;
+    }
+
+    // Due counts for the given library. Progress rows for sets or cards that
+    // are no longer in it are skipped. Sets come out ordered by their most
+    // overdue card, because the query walks the nextReview index.
+    async getDueCountsBySet(
+        studysets: readonly Pick<Studyset, 'studysetUUID' | 'cards'>[],
+        now: Date = new Date()
+    ): Promise<Map<UUID, number>> {
+        await this.ensureMigrated();
+        const cardsBySet = new Map<UUID, Set<UUID>>();
+        for (const { studysetUUID, cards } of studysets) {
+            const ids = new Set<UUID>();
+            // The library is only loosely validated, so skip malformed cards.
+            for (const card of cards as unknown[]) {
+                const cardUUID = (card as { cardUUID?: unknown } | null)
+                    ?.cardUUID;
+                if (typeof cardUUID === 'string') ids.add(cardUUID);
+            }
+            cardsBySet.set(studysetUUID, ids);
+        }
+
+        const due = await this.db.cardProgress
+            .where('nextReview')
+            .belowOrEqual(now.toISOString())
+            .toArray();
+        const counts = new Map<UUID, number>();
+        for (const { cardUUID, studysetUUID } of due) {
+            if (!cardsBySet.get(studysetUUID)?.has(cardUUID)) continue;
+            counts.set(studysetUUID, (counts.get(studysetUUID) ?? 0) + 1);
+        }
+        return counts;
     }
 
     // ===== Write =====

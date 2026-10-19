@@ -47,6 +47,28 @@ export const updateDailyStreak = (
     };
 };
 
+export type EffectiveStreak = { days: number; atRisk: boolean };
+
+// The stored streak only updates when a session ends, so a missed day leaves
+// it stale. Uses the same day keys as updateDailyStreak, so a streak shown
+// here is one the next session would continue.
+export const getEffectiveStreak = (
+    state: Pick<GamificationState, 'currentStreak' | 'lastStudyDate'>,
+    today: Date = new Date()
+): EffectiveStreak => {
+    const { currentStreak, lastStudyDate } = state;
+    if (!lastStudyDate || currentStreak <= 0) {
+        return { days: 0, atRisk: false };
+    }
+    if (lastStudyDate === getDateKey(today)) {
+        return { days: currentStreak, atRisk: false };
+    }
+    if (lastStudyDate === getYesterdayKey(today)) {
+        return { days: currentStreak, atRisk: true };
+    }
+    return { days: 0, atRisk: false };
+};
+
 type EvaluationContext = {
     gamification: GamificationState;
     statistics: StudyStatistics;

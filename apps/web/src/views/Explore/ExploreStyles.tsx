@@ -52,7 +52,11 @@ export const ForYouItem = styled('li')({
     minWidth: 0,
 });
 
-export const TileArticle = styled('article')(({ theme }) => ({
+// Only tiles that are links lift on hover; a lift on anything else would
+// suggest it can be clicked.
+export const TileArticle = styled('article', {
+    shouldForwardProp: (prop) => prop !== 'interactive',
+})<{ interactive?: boolean }>(({ theme, interactive }) => ({
     position: 'relative',
     height: '100%',
     boxSizing: 'border-box',
@@ -72,21 +76,25 @@ export const TileArticle = styled('article')(({ theme }) => ({
     // `backwards`, not `both`: a forwards fill would hold the last frame's
     // transform and override the hover lift.
     animation: `${tileEnter} 0.3s cubic-bezier(0.4, 0, 0.2, 1) backwards`,
-    '&:hover': {
-        transform: 'translateY(-4px)',
-        borderColor: theme.palette.primary.main,
-        background: theme.palette.action.hover,
-        boxShadow:
-            theme.palette.mode === 'dark'
-                ? '0 8px 24px rgba(0, 0, 0, 0.5)'
-                : '0 8px 24px rgba(0, 0, 0, 0.12)',
-    },
+    ...(interactive && {
+        '&:hover': {
+            transform: 'translateY(-4px)',
+            borderColor: theme.palette.primary.main,
+            background: theme.palette.action.hover,
+            boxShadow:
+                theme.palette.mode === 'dark'
+                    ? '0 8px 24px rgba(0, 0, 0, 0.5)'
+                    : '0 8px 24px rgba(0, 0, 0, 0.12)',
+        },
+    }),
     '@media (prefers-reduced-motion: reduce)': {
         animation: 'none',
         transition: 'none',
-        '&:hover': {
-            transform: 'none',
-        },
+        ...(interactive && {
+            '&:hover': {
+                transform: 'none',
+            },
+        }),
     },
 }));
 
@@ -150,3 +158,15 @@ export const TileMeta = styled('p')(({ theme }) => ({
     marginTop: 'auto',
     color: theme.palette.text.secondary,
 }));
+
+export const TileFooter = styled('div')({
+    marginTop: 'auto',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '0.5rem',
+    flexWrap: 'wrap',
+    '& > p': {
+        marginTop: 0,
+    },
+});
