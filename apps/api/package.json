@@ -13,7 +13,8 @@
 		"backfill:public-gsi": "ts-node scripts/backfillPublicGsi.ts",
 		"migrate:logto-user": "ts-node scripts/migrateUserToLogto.ts",
 		"cleanup:empty-studysets": "ts-node scripts/cleanupEmptyStudysets.ts",
-		"cleanup:public-duplicates": "ts-node scripts/cleanupPublicDuplicates.ts"
+		"cleanup:public-duplicates": "ts-node scripts/cleanupPublicDuplicates.ts",
+		"unpublish:studyset": "ts-node scripts/unpublishStudyset.ts"
 	},
 	"dependencies": {
 		"@quizaroni/shared-types": "workspace:*",

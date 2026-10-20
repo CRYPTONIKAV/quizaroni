@@ -2,9 +2,11 @@
  * One-off backfill: index study sets that were already public *before* the
  * public-sharing GSI existed.
  *
- * New/edited sets get their PK2/SK2 attributes written by `updateStudyset` when
- * `publiclyViewable` toggles. Sets that were made public earlier have no PK2,
- * so they are invisible to the public read path until backfilled here.
+ * PK2/SK2 are now written only by publish/unpublish and the takedown script.
+ * Legacy sets made public before the GSI existed have no PK2, so they are
+ * invisible to the public read path until backfilled here. This bypasses the
+ * publish gate (no subject, no card-count check): never use it to publish
+ * sets. Sets hidden by moderation are skipped.
  *
  * Usage (with AWS credentials for the target account in the environment):
  *   MAIN_TABLE=quizaroni-<deploymentType>-main AWS_REGION=us-west-2 \
@@ -43,9 +45,9 @@ const run = async () => {
         const result = await docClient.send(
             new ScanCommand({
                 TableName: mainTable,
-                // Only public sets that are not yet on the PK2 index.
+                // Only public, non-hidden sets that are not yet on the PK2 index.
                 FilterExpression:
-                    'metadata.publiclyViewable = :true AND attribute_not_exists(PK2)',
+                    'metadata.publiclyViewable = :true AND attribute_not_exists(PK2) AND attribute_not_exists(moderation.hiddenAt)',
                 ExpressionAttributeValues: { ':true': true },
                 ExclusiveStartKey: lastEvaluatedKey as never,
             })

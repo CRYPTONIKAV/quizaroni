@@ -226,6 +226,14 @@ export class QuizaroniAPI extends Construct {
                 lambdaName: 'duplicateStudyset',
             },
             {
+                route: `${studysetsPrefix}/publish-studyset`,
+                lambdaName: 'publishStudyset',
+            },
+            {
+                route: `${studysetsPrefix}/unpublish-studyset`,
+                lambdaName: 'unpublishStudyset',
+            },
+            {
                 route: `${studysetsPrefix}/batch-delete-studysets`,
                 lambdaName: 'batchDeleteStudysets',
             },

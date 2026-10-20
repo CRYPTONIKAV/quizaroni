@@ -674,5 +674,39 @@
         "goBack": "Atrás",
         "removeSet": "Eliminar {{title}} de la combinación",
         "addSet": "Agregar {{title}} a la combinación"
+    },
+    "subjects": {
+        "languages": "Idiomas",
+        "math": "Matemáticas",
+        "science": "Ciencias",
+        "medicine-health": "Medicina y salud",
+        "history": "Historia",
+        "geography": "Geografía",
+        "social-sciences": "Ciencias sociales",
+        "law": "Derecho",
+        "computer-science": "Informática",
+        "business-economics": "Negocios y economía",
+        "arts-humanities": "Artes y humanidades",
+        "other": "Otro"
+    },
+    "publish": {
+        "menuPublish": "Publicar en Explorar",
+        "menuManage": "Gestionar publicación",
+        "title": "Publicar en Explorar",
+        "publishedStatus": "Este set está publicado en Explorar.",
+        "subjectLabel": "Tema",
+        "subjectPlaceholder": "Elige un tema",
+        "disclosure": "Cualquiera puede encontrar este set en Explorar y en los buscadores. Las notas y etiquetas siguen siendo privadas.",
+        "publish": "Publicar",
+        "update": "Guardar tema",
+        "unpublish": "Despublicar",
+        "success": "Publicado en Explorar",
+        "unpublishSuccess": "Retirado de Explorar",
+        "errors": {
+            "invalidSubject": "Elige un tema.",
+            "notEnoughCards": "Añade al menos {{required}} tarjetas con término y definición. Este set tiene {{actual}}.",
+            "hidden": "Los moderadores retiraron este set y no se puede publicar.",
+            "generic": "Algo salió mal. Inténtalo de nuevo."
+        }
     }
 }

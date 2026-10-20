@@ -25,6 +25,7 @@ import {
     DynamoDBDocumentClient,
     ScanCommand,
 } from '@aws-sdk/lib-dynamodb';
+import { isDryRun } from './dryRun';
 
 type StubOptions = { includeLabeled?: boolean };
 
@@ -63,11 +64,6 @@ export const isEmptyStudysetStub = (
     typeof item.SK === 'string' &&
     item.SK.startsWith('studyset#') &&
     absentAttributes(includeLabeled).every((name) => !(name in item));
-
-// A set DRY_RUN counts unless it is 0/false, so a typo or an empty value can't
-// turn a report into real deletes.
-const isDryRun = (value: string | undefined) =>
-    value !== undefined && !['0', 'false'].includes(value.toLowerCase());
 
 export const readCleanupConfig = (env: NodeJS.ProcessEnv): CleanupConfig => {
     const tableName = env.MAIN_TABLE ?? '';

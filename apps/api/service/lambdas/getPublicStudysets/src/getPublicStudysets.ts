@@ -6,6 +6,7 @@ import {
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import {
+    isPubliclyListed,
     PUBLIC_GSI_INDEX_NAME,
     PUBLIC_STUDYSET_PK,
 } from 'resources/dynamo/publicSharing';
@@ -26,9 +27,10 @@ type PublicStudysetSummary = {
 
 /**
  * Unauthenticated listing of every public study set, used to build the sitemap
- * (and, later, an anonymous Explore). Because a set is indexed on the PK2 GSI
- * only while public, this is a single partition Query with no filter — the
- * partition contains exactly the currently-public sets.
+ * (and, later, an anonymous Explore). A set is indexed on the PK2 GSI only
+ * while published, so this is a single partition Query. Rows that fail
+ * `isPubliclyListed` (flag off, hidden by moderation, or a pre-#125 copy under
+ * another set's key) are dropped in the loop, matching the single-set endpoint.
  */
 export const handler: Handler = async (
     event: APIGatewayProxyEventV2,
@@ -48,14 +50,21 @@ export const handler: Handler = async (
                 ExpressionAttributeValues: { ':pk': PUBLIC_STUDYSET_PK },
                 // `title` / `updatedAt` are not reserved words; alias only if
                 // that ever changes.
-                ProjectionExpression: 'studysetUUID, title, updatedAt',
+                ProjectionExpression:
+                    'studysetUUID, title, updatedAt, SK, SK2, #metadata.#publiclyViewable, #moderation.#hiddenAt',
+                ExpressionAttributeNames: {
+                    '#metadata': 'metadata',
+                    '#publiclyViewable': 'publiclyViewable',
+                    '#moderation': 'moderation',
+                    '#hiddenAt': 'hiddenAt',
+                },
                 ExclusiveStartKey: lastEvaluatedKey,
             });
 
             const result = await docClient.send(queryCommand);
 
             for (const item of result.Items ?? []) {
-                if (item.studysetUUID) {
+                if (item.studysetUUID && isPubliclyListed(item)) {
                     studysets.push({
                         studysetUUID: item.studysetUUID,
                         title: item.title ?? '',

@@ -9,6 +9,8 @@ import { SET_METADATA_FIELDS, ENABLED, DISABLED } from 'shared/constants';
 import { Studyset, TODO } from 'shared/types';
 import { useTheme } from 'theme/useTheme';
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { isPublishEnabled } from 'shared/featureFlags';
 
 type Props = {
     anchorEl: Element | null;
@@ -16,6 +18,7 @@ type Props = {
     open: boolean;
     selectedStudyset: Studyset | undefined;
     updateMetadataState: any;
+    onOpenPublish: () => void;
 };
 
 const ControlMenu = ({
@@ -24,8 +27,10 @@ const ControlMenu = ({
     open,
     selectedStudyset,
     updateMetadataState,
+    onOpenPublish,
 }: Props) => {
     const { muiTheme } = useTheme();
+    const { t } = useTranslation();
 
     const { metadata = {} } = selectedStudyset || {};
     const {
@@ -38,6 +43,9 @@ const ControlMenu = ({
         // @ts-ignore
         contentOnly = false,
     } = metadata;
+
+    // A non-owner viewing someone else's set gets an empty selectedStudyset.
+    const canPublish = isPublishEnabled() && !!selectedStudyset?.studysetUUID;
 
     const menuItems = useMemo(
         () => [
@@ -101,34 +109,15 @@ const ControlMenu = ({
                     );
                 }
             )}
-            {/* <MenuItem>
-        <FormControlLabel
-            control={
-                <Switch
-                    size="small"
-                    checked={publiclyViewable}
-                    onChange={() =>
-                        updateMetadataState(
-                            SET_METADATA_FIELDS.PUBLIC
-                        )
-                    }
-                />
-            }
-            label={
-                <Typography
-                    sx={{
-                        color: publiclyViewable
-                            ? theme.palette.success.main
-                            : theme.palette.error.main,
-                    }}
-                >
-                    {`Viewable: ${
-                        publiclyViewable ? "Public" : "Private"
-                    }`}
-                </Typography>
-            }
-        />
-    </MenuItem> */}
+            {canPublish && (
+                <MenuItem onClick={onOpenPublish}>
+                    {t(
+                        publiclyViewable
+                            ? 'publish.menuManage'
+                            : 'publish.menuPublish'
+                    )}
+                </MenuItem>
+            )}
         </Menu>
     );
 };

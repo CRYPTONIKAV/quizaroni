@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { SUBJECT_IDS } from '@quizaroni/shared-types';
 
 // #region Base Schemas
 export const UUIDSchema = z.uuid({
@@ -58,7 +59,9 @@ export const StudysetSchema = z.object({
     labels: z.array(z.string()),
     lastViewed: TimestampSchema,
     metadata: StudysetMetadataSchema,
+    publishedAt: TimestampSchema.optional(),
     studysetUUID: UUIDSchema,
+    subject: z.enum(SUBJECT_IDS).optional(),
     title: z.string(),
     username: z.string(),
     userUUID: UUIDSchema,
@@ -265,6 +268,8 @@ export const UpdateStudysetRequestSchema = z.object({
 export const UpdateStudysetResponseSchema = BaseResponseSchema.extend({
     studyset: StudysetSchema,
 });
+
+export const PublishStudysetResponseSchema = UpdateStudysetResponseSchema;
 
 export const BatchUpdateStudysetsRequestSchema = z.object({
     studysetUpdates: z.array(z.tuple([UUIDSchema, UpdatesSchema])),

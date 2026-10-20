@@ -8,6 +8,7 @@ import { DynamoDBDocumentClient, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { S3Client } from '@aws-sdk/client-s3';
 import { Studyset } from 'models/studysets';
 import {
+    isPubliclyListed,
     PUBLIC_GSI_INDEX_NAME,
     PUBLIC_STUDYSET_PK,
     publicStudysetSK,
@@ -24,6 +25,9 @@ const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
 const s3Client = new S3Client({});
 
+// Bounds the pages an anonymous request can read while skipping copies.
+const MAX_PAGES = 5;
+
 const notFound = (): APIGatewayProxyResultV2 => ({
     statusCode: 404,
     body: JSON.stringify({
@@ -34,8 +38,9 @@ const notFound = (): APIGatewayProxyResultV2 => ({
 /**
  * Unauthenticated read of a single public study set. Registered without the
  * Cognito authorizer so crawlers, social scrapers, and logged-out visitors can
- * fetch it. Only sets whose `metadata.publiclyViewable` is true are indexed on
- * the PK2 GSI, and we re-check the flag as defence in depth.
+ * fetch it. Only the set's own index row may be served: pre-#125 copies can
+ * share its SK2 (#171). `isPubliclyListed` enforces that and re-checks the
+ * flag and moderation.
  */
 export const handler: Handler = async (
     event: APIGatewayProxyEventV2,
@@ -49,21 +54,33 @@ export const handler: Handler = async (
     }
 
     try {
-        const queryCommand = new QueryCommand({
-            TableName: mainTable,
-            IndexName: PUBLIC_GSI_INDEX_NAME,
-            KeyConditionExpression: 'PK2 = :pk AND SK2 = :sk',
-            ExpressionAttributeValues: {
-                ':pk': PUBLIC_STUDYSET_PK,
-                ':sk': publicStudysetSK(studysetUUID),
-            },
-            Limit: 1,
-        });
+        // No Limit, and keep paging: copies under this SK2 can fill a page
+        // before the set's own row. The filter keeps them out of the payload.
+        let studyset: Record<string, unknown> | undefined;
+        let lastEvaluatedKey: Record<string, unknown> | undefined;
+        let pages = 0;
+        do {
+            pages += 1;
+            const result = await docClient.send(
+                new QueryCommand({
+                    TableName: mainTable,
+                    IndexName: PUBLIC_GSI_INDEX_NAME,
+                    KeyConditionExpression: 'PK2 = :pk AND SK2 = :sk',
+                    FilterExpression: 'SK = SK2',
+                    ExpressionAttributeValues: {
+                        ':pk': PUBLIC_STUDYSET_PK,
+                        ':sk': publicStudysetSK(studysetUUID),
+                    },
+                    ExclusiveStartKey: lastEvaluatedKey,
+                })
+            );
+            studyset = result.Items?.find(isPubliclyListed);
+            lastEvaluatedKey = result.LastEvaluatedKey as
+                | Record<string, unknown>
+                | undefined;
+        } while (!studyset && lastEvaluatedKey && pages < MAX_PAGES);
 
-        const result = await docClient.send(queryCommand);
-        const studyset = result.Items?.[0];
-
-        if (!studyset || studyset.metadata?.publiclyViewable !== true) {
+        if (!studyset) {
             return notFound();
         }
 

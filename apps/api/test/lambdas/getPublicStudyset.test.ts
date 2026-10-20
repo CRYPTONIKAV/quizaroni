@@ -112,4 +112,58 @@ describe("getPublicStudyset handler", () => {
 
         expect(res.statusCode).toBe(404);
     });
+
+    // #171: duplicates made before #125 kept their source's SK2, so the index
+    // can hold another set's row under this id.
+    it("serves the set's own row, not a copy that inherited its index key", async () => {
+        const copy = {
+            ...storedItem,
+            PK: "userUUID#someone-else",
+            SK: "studyset#copy",
+            studysetUUID: "copy",
+            title: "Copied title",
+        };
+        send.mockResolvedValueOnce({ Items: [copy, storedItem] } as never);
+
+        const res = await invoke();
+
+        expect(res.statusCode).toBe(200);
+        expect(JSON.parse(res.body ?? "").studyset.title).toBe("Cell biology");
+        const query = send.mock.calls[0][0] as unknown as { input: { Limit?: number } };
+        expect(query.input.Limit).toBeUndefined();
+    });
+
+    it("pages past copies that fill the first page", async () => {
+        send.mockResolvedValueOnce({ Items: [], LastEvaluatedKey: { PK2: "x" } } as never)
+            .mockResolvedValueOnce({ Items: [storedItem] } as never);
+
+        const res = await invoke();
+
+        expect(res.statusCode).toBe(200);
+        expect(send).toHaveBeenCalledTimes(2);
+        type QueryInput = { input: { FilterExpression?: string; ExclusiveStartKey?: unknown } };
+        const [first, second] = send.mock.calls.map(([cmd]) => cmd as unknown as QueryInput);
+        expect(first.input.FilterExpression).toBe("SK = SK2");
+        expect(second.input.ExclusiveStartKey).toEqual({ PK2: "x" });
+    });
+
+    it("404s when only a copy is left under the set's index key", async () => {
+        send.mockResolvedValueOnce({
+            Items: [{ ...storedItem, PK: "userUUID#someone-else", SK: "studyset#copy" }],
+        } as never);
+
+        const res = await invoke();
+
+        expect(res.statusCode).toBe(404);
+    });
+
+    it("404s a set hidden by moderation", async () => {
+        send.mockResolvedValueOnce({
+            Items: [{ ...storedItem, moderation: { hiddenAt: "2026-10-16T00:00:00.000Z" } }],
+        } as never);
+
+        const res = await invoke();
+
+        expect(res.statusCode).toBe(404);
+    });
 });

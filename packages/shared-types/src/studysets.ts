@@ -1,5 +1,6 @@
 import type { Timestamp, UUID } from './primitives';
 import type { CardFileMetadata } from './files';
+import type { SubjectId } from './subjects';
 
 export type ViewSetLayout = 'list' | 'grid';
 
@@ -63,7 +64,9 @@ export type StudysetBase = {
     labels: string[];
     lastViewed: Timestamp;
     metadata: StudysetMetadata;
+    publishedAt?: Timestamp;
     studysetUUID: UUID;
+    subject?: SubjectId;
     title: string;
     userUUID: UUID;
     username: string;

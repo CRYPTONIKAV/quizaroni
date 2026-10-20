@@ -674,5 +674,39 @@
         "goBack": "Go back",
         "removeSet": "Remove {{title}} from combination",
         "addSet": "Add {{title}} to combination"
+    },
+    "subjects": {
+        "languages": "Languages",
+        "math": "Math",
+        "science": "Science",
+        "medicine-health": "Medicine & health",
+        "history": "History",
+        "geography": "Geography",
+        "social-sciences": "Social sciences",
+        "law": "Law",
+        "computer-science": "Computer science",
+        "business-economics": "Business & economics",
+        "arts-humanities": "Arts & humanities",
+        "other": "Other"
+    },
+    "publish": {
+        "menuPublish": "Publish to Explore",
+        "menuManage": "Manage publishing",
+        "title": "Publish to Explore",
+        "publishedStatus": "This set is published in Explore.",
+        "subjectLabel": "Subject",
+        "subjectPlaceholder": "Choose a subject",
+        "disclosure": "Anyone can find this set in Explore and search engines. Notes and labels stay private.",
+        "publish": "Publish",
+        "update": "Save subject",
+        "unpublish": "Unpublish",
+        "success": "Published to Explore",
+        "unpublishSuccess": "Removed from Explore",
+        "errors": {
+            "invalidSubject": "Choose a subject.",
+            "notEnoughCards": "Add at least {{required}} cards with both a term and a definition. This set has {{actual}}.",
+            "hidden": "This set was removed by moderators and can't be published.",
+            "generic": "Something went wrong. Try again."
+        }
     }
 }

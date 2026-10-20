@@ -34,6 +34,7 @@ import {
     PUBLIC_STUDYSET_PK,
     publicStudysetSK,
 } from '../resources/dynamo/publicSharing';
+import { isDryRun } from './dryRun';
 
 type CleanupResult = {
     scanned: number;
@@ -52,11 +53,6 @@ export const isInheritedPublicCopy = (item: Record<string, unknown>): boolean =>
     typeof item.studysetUUID === 'string' &&
     typeof item.SK2 === 'string' &&
     item.SK2 !== publicStudysetSK(item.studysetUUID);
-
-// A set DRY_RUN counts unless it is 0/false, so a typo or an empty value can't
-// turn a report into real writes.
-const isDryRun = (value: string | undefined) =>
-    value !== undefined && !['0', 'false'].includes(value.toLowerCase());
 
 export const readCleanupConfig = (env: NodeJS.ProcessEnv): CleanupConfig => {
     const tableName = env.MAIN_TABLE ?? '';

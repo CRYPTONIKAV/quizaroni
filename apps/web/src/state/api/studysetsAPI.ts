@@ -16,8 +16,10 @@ import {
     BatchDeleteStudysetsResponseSchema,
     BatchDuplicateStudysetsResponseSchema,
     CreateNoteResponseSchema,
+    PublishStudysetResponseSchema,
 } from 'shared/schemas';
 import type { z } from 'zod';
+import type { PublishError, SubjectId } from '@quizaroni/shared-types';
 
 /* Endpoints
     Studyset Operations
@@ -31,6 +33,8 @@ import type { z } from 'zod';
     router.post("/api/studysets/update-studyset", updateStudyset);
     router.post("/api/studysets/batch-update-studysets", batchUpdateStudysets);
     router.post("/api/studysets/editCategory", editCategory);
+    router.post("/api/studysets/publish-studyset", publishStudyset);
+    router.post("/api/studysets/unpublish-studyset", unpublishStudyset);
     
     Note Operations
     router.post("/api/studysets/create-note", createNote);
@@ -341,6 +345,86 @@ export const useUpdateStudyset = () => {
                 queryKey: ['studysets', variables.studysetUUID],
             });
         },
+    });
+};
+
+/** Carries the publish gate's error codes so the dialog can show each one. */
+export class PublishStudysetError extends Error {
+    constructor(
+        public status: number,
+        public errors: PublishError[]
+    ) {
+        super(`Publish failed with status ${status}`);
+        this.name = 'PublishStudysetError';
+    }
+}
+
+const usePublicationMutationSuccess = () => {
+    const queryClient = useQueryClient();
+    return (_data: unknown, { studysetUUID }: { studysetUUID: UUID }) => {
+        queryClient.invalidateQueries({ queryKey: ['studysets'] });
+        queryClient.invalidateQueries({
+            queryKey: ['public-studyset', studysetUUID],
+        });
+    };
+};
+
+export const usePublishStudyset = () => {
+    const onSuccess = usePublicationMutationSuccess();
+    return useMutation({
+        mutationFn: async ({
+            studysetUUID,
+            subject,
+        }: {
+            studysetUUID: UUID;
+            subject: SubjectId;
+        }) => {
+            // Raw fetch rather than fetchJson: a 400 carries the gate's
+            // error codes, which fetchJson would flatten into a message.
+            const response = await fetch(
+                `${BASE_API_URL}/studysets/publish-studyset`,
+                {
+                    ...(await getCommonPostRequestProps()),
+                    body: JSON.stringify({ studysetUUID, subject }),
+                }
+            );
+            if (!response.ok) {
+                const body = await response.json().catch(() => ({}));
+                throw new PublishStudysetError(
+                    response.status,
+                    Array.isArray(body.errors) ? body.errors : []
+                );
+            }
+            return validate({
+                schema: PublishStudysetResponseSchema,
+                data: await response.json(),
+                type: 'response',
+                context: 'PublishStudyset',
+            });
+        },
+        onSuccess,
+    });
+};
+
+export const useUnpublishStudyset = () => {
+    const onSuccess = usePublicationMutationSuccess();
+    return useMutation({
+        mutationFn: async ({ studysetUUID }: { studysetUUID: UUID }) => {
+            const data = await fetchJson(
+                `${BASE_API_URL}/studysets/unpublish-studyset`,
+                {
+                    ...(await getCommonPostRequestProps()),
+                    body: JSON.stringify({ studysetUUID }),
+                }
+            );
+            return validate({
+                schema: PublishStudysetResponseSchema,
+                data,
+                type: 'response',
+                context: 'UnpublishStudyset',
+            });
+        },
+        onSuccess,
     });
 };
 
