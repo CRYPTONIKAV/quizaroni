@@ -108,11 +108,13 @@ export const TileEyebrow = styled('p')(({ theme }) => ({
     color: theme.palette.other.primaryText,
 }));
 
-export const TileTitle = styled('h3')(({ theme }) => ({
+export const TileTitle = styled('h3', {
+    shouldForwardProp: (prop) => prop !== 'lines',
+})<{ lines?: number }>(({ theme, lines = 2 }) => ({
     ...typeScale(theme.typography.h6),
     margin: 0,
     display: '-webkit-box',
-    WebkitLineClamp: 2,
+    WebkitLineClamp: lines,
     WebkitBoxOrient: 'vertical',
     overflow: 'hidden',
     overflowWrap: 'anywhere',
@@ -150,6 +152,33 @@ export const TileDescription = styled('p')(({ theme }) => ({
     WebkitBoxOrient: 'vertical',
     overflow: 'hidden',
     overflowWrap: 'anywhere',
+}));
+
+// A fixed-height tile fits a one-line title and two one-line previews.
+export const TilePreviewList = styled('ul')({
+    listStyle: 'none',
+    margin: 0,
+    padding: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.125rem',
+    minHeight: 0,
+    overflow: 'hidden',
+});
+
+export const TilePreviewItem = styled('li')(({ theme }) => ({
+    ...typeScale(theme.typography.body2),
+    color: theme.palette.text.secondary,
+    display: '-webkit-box',
+    WebkitLineClamp: 1,
+    WebkitBoxOrient: 'vertical',
+    overflow: 'hidden',
+    overflowWrap: 'anywhere',
+}));
+
+export const TilePreviewTerm = styled('span')(({ theme }) => ({
+    color: theme.palette.text.primary,
+    fontWeight: 600,
 }));
 
 export const TileMeta = styled('p')(({ theme }) => ({

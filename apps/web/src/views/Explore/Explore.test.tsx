@@ -8,6 +8,7 @@ import {
     afterEach,
 } from 'vite-plus/test';
 import {
+    act,
     fireEvent,
     render,
     screen,
@@ -26,6 +27,7 @@ const NEWER_ID = '22222222-2222-4222-8222-222222222222';
 
 const createSpy = vi.fn();
 const dueSpy = vi.fn();
+const lastStudiedSpy = vi.fn();
 let gam: { currentStreak: number; lastStudyDate: string | null };
 
 vi.mock('react-i18next', () => ({
@@ -56,6 +58,7 @@ vi.mock('react-router-dom', () => {
 vi.mock('state/local/repositories', () => ({
     cardProgressRepository: {
         getDueCountsBySet: (...args: unknown[]) => dueSpy(...args),
+        getLastStudiedBySet: (...args: unknown[]) => lastStudiedSpy(...args),
     },
 }));
 
@@ -71,7 +74,20 @@ vi.mock('hooks/useCreateStudysetAction', () => ({
     }),
 }));
 
-const makeSet = (id: string, title: string, lastViewed: string) => ({
+const R1_ID = '44444444-4444-4444-8444-444444444441';
+const R2_ID = '44444444-4444-4444-8444-444444444442';
+const R3_ID = '44444444-4444-4444-8444-444444444443';
+const FAV_ID = '55555555-5555-4555-8555-555555555555';
+const OLD_ID = '66666666-6666-4666-8666-666666666666';
+
+const DAY = 86_400_000;
+
+const makeSet = (
+    id: string,
+    title: string,
+    lastViewed: string,
+    overrides: Record<string, unknown> = {}
+) => ({
     cards: [],
     categories: [],
     createdAt: '2026-01-01T00:00:00.000Z',
@@ -97,6 +113,7 @@ const makeSet = (id: string, title: string, lastViewed: string) => ({
     username: 'owner',
     userUUID: OWNER,
     uuid: id,
+    ...overrides,
 });
 
 const json = (status: number, body: unknown) =>
@@ -117,6 +134,41 @@ const withSets = () =>
                 updatedAt: '2026-10-02T00:00:00.000Z',
                 updatedBy: OWNER,
             },
+        ],
+    });
+
+const withLibrary = (...sets: unknown[]) => json(200, { studysets: sets });
+
+const isoDaysAgo = (n: number) => new Date(Date.now() - n * DAY).toISOString();
+
+// Fills jump back in, so favorite and revisit tiles come after these three.
+const recent = () => [
+    makeSet(R1_ID, 'Recent 1', isoDaysAgo(1)),
+    makeSet(R2_ID, 'Recent 2', isoDaysAgo(2)),
+    makeSet(R3_ID, 'Recent 3', isoDaysAgo(3)),
+];
+
+const favoriteSet = () =>
+    makeSet(FAV_ID, 'Favorite Set', isoDaysAgo(10), { favorited: true });
+
+const staleSet = () =>
+    makeSet(OLD_ID, 'Stale Set', isoDaysAgo(40), {
+        description: 'Cell biology basics',
+        cards: [
+            {
+                cardUUID: 'c0',
+                term: '',
+                definition: 'Picture',
+                files: [{ fileUUID: 'f0', association: 'term' }],
+            },
+            {
+                cardUUID: 'c1',
+                term: 'Mitochondria',
+                definition: 'Powerhouse of the cell',
+                files: [],
+            },
+            { cardUUID: 'c2', term: 'Ribosome', definition: '', files: [] },
+            { cardUUID: 'c3', term: 'Third', definition: 'x', files: [] },
         ],
     });
 
@@ -173,6 +225,8 @@ describe('Explore', () => {
         createSpy.mockClear();
         dueSpy.mockReset();
         dueSpy.mockResolvedValue(new Map());
+        lastStudiedSpy.mockReset();
+        lastStudiedSpy.mockResolvedValue(new Map());
         gam = { currentStreak: 0, lastStudyDate: null };
         fetchMock.mockClear();
         fetchMock.mockImplementation(() => withSets());
@@ -228,9 +282,9 @@ describe('Explore', () => {
 
         const list = screen.getByRole('list', { hidden: true });
         expect(list.getAttribute('aria-busy')).toBe('true');
-        // At most 5 tiles can load: due, streak and 3 jump back in.
+        // Revisit fills what the other sources leave, so a full grid can load.
         const items = list.querySelectorAll('li');
-        expect(items).toHaveLength(5);
+        expect(items).toHaveLength(6);
         items.forEach((item) =>
             expect(item.getAttribute('aria-hidden')).toBe('true')
         );
@@ -488,5 +542,183 @@ describe('Explore', () => {
             ).test(css);
         expect(lifts(set!)).toBe(true);
         expect(lifts(due!)).toBe(false);
+    });
+
+    it('shows a favorite tile after jump back in', async () => {
+        fetchMock.mockImplementation(() =>
+            withLibrary(...recent(), favoriteSet())
+        );
+        renderExplore();
+
+        const articles = await screen.findAllByRole('article');
+        expect(articles).toHaveLength(4);
+        const favorite = articles[3]!;
+        expect(favorite.textContent).toContain('tile.favorite');
+        const heading = within(favorite).getByRole('heading', { level: 3 });
+        expect(within(heading).getByRole('link').getAttribute('href')).toBe(
+            `/view/${FAV_ID}`
+        );
+    });
+
+    it('shows a revisit tile with term previews for a set left alone for over 30 days', async () => {
+        fetchMock.mockImplementation(() =>
+            withLibrary(...recent(), staleSet())
+        );
+        renderExplore();
+
+        const articles = await screen.findAllByRole('article');
+        expect(articles).toHaveLength(4);
+        const revisit = articles[3]!;
+        expect(revisit.textContent).toContain('tile.revisit');
+        const previews = within(revisit).getByRole('list', {
+            name: 'tile.previews',
+        });
+        const items = within(previews).getAllByRole('listitem');
+        expect(items.map((item) => item.textContent)).toEqual([
+            'Mitochondria — Powerhouse of the cell',
+            'Ribosome',
+        ]);
+        // Previews take the description's place in the fixed-height tile.
+        expect(revisit.textContent).not.toContain('Cell biology basics');
+        expect(lastStudiedSpy).toHaveBeenCalled();
+    });
+
+    it('counts studying a set as activity, even when it was not opened', async () => {
+        lastStudiedSpy.mockResolvedValue(
+            new Map([[OLD_ID, Date.now() - 2 * DAY]])
+        );
+        fetchMock.mockImplementation(() =>
+            withLibrary(...recent(), staleSet())
+        );
+        renderExplore();
+
+        const articles = await screen.findAllByRole('article');
+        expect(articles).toHaveLength(3);
+        expect(screen.queryByText('tile.revisit')).toBeNull();
+    });
+
+    it('wraps long preview words and keeps the revisit title to one line', async () => {
+        fetchMock.mockImplementation(() =>
+            withLibrary(...recent(), staleSet())
+        );
+        renderExplore();
+
+        const articles = await screen.findAllByRole('article');
+        const revisit = articles[3]!;
+        const css = allStyles();
+        const [item] = within(revisit).getAllByRole('listitem');
+        expect(css).toMatch(
+            new RegExp(
+                `\\.${cssClass(item!)} ?\\{[^}]*overflow-wrap: ?anywhere`
+            )
+        );
+        const heading = within(revisit).getByRole('heading', { level: 3 });
+        expect(css).toMatch(
+            new RegExp(
+                `\\.${cssClass(heading)} ?\\{[^}]*-webkit-line-clamp: ?1`
+            )
+        );
+    });
+
+    it('holds the 6-tile cap across all sources', async () => {
+        dueSpy.mockResolvedValue(new Map([[R1_ID, 1]]));
+        gam = { currentStreak: 2, lastStudyDate: getDateKey() };
+        fetchMock.mockImplementation(() =>
+            withLibrary(...recent(), favoriteSet(), staleSet())
+        );
+        renderExplore();
+
+        const articles = await screen.findAllByRole('article');
+        expect(articles).toHaveLength(6);
+        expect(articles[0]!.textContent).toContain('tile.due.eyebrow');
+        expect(articles[1]!.textContent).toContain('tile.streak.eyebrow');
+        expect(
+            articles
+                .slice(2, 5)
+                .map(
+                    (a) =>
+                        within(
+                            within(a).getByRole('heading', { level: 3 })
+                        ).getByRole('link').textContent
+                )
+        ).toEqual(['Recent 1', 'Recent 2', 'Recent 3']);
+        expect(articles[5]!.textContent).toContain('tile.favorite');
+        expect(screen.queryByText('tile.revisit')).toBeNull();
+    });
+
+    it('stays loading until the study-history lookup finishes', async () => {
+        let resolveHistory!: (history: Map<string, number>) => void;
+        lastStudiedSpy.mockReturnValue(
+            new Promise((resolve) => {
+                resolveHistory = resolve;
+            })
+        );
+        fetchMock.mockImplementation(() => withLibrary(...recent()));
+        renderExplore();
+
+        await waitFor(() => expect(dueSpy).toHaveBeenCalled());
+        // A macrotask, so the due lookup settles and only history is pending.
+        await act(() => new Promise((resolve) => setTimeout(resolve, 0)));
+        const list = screen.getByRole('list', { hidden: true });
+        expect(list.getAttribute('aria-busy')).toBe('true');
+        expect(screen.queryByRole('article')).toBeNull();
+
+        await act(async () => resolveHistory(new Map()));
+        expect(await screen.findAllByRole('article')).toHaveLength(3);
+    });
+
+    it('falls back to the description on a revisit tile with no text terms', async () => {
+        fetchMock.mockImplementation(() =>
+            withLibrary(
+                ...recent(),
+                makeSet(OLD_ID, 'Stale Set', isoDaysAgo(40), {
+                    description: 'Diagrams only',
+                    cards: [
+                        {
+                            cardUUID: 'c0',
+                            term: '',
+                            definition: '',
+                            files: [{ fileUUID: 'f0', association: 'term' }],
+                        },
+                    ],
+                })
+            )
+        );
+        renderExplore();
+
+        const articles = await screen.findAllByRole('article');
+        expect(articles).toHaveLength(4);
+        const revisit = articles[3]!;
+        expect(revisit.textContent).toContain('tile.revisit');
+        expect(
+            within(revisit).queryByRole('list', { name: 'tile.previews' })
+        ).toBeNull();
+        expect(revisit.textContent).toContain('Diagrams only');
+        const heading = within(revisit).getByRole('heading', { level: 3 });
+        expect(allStyles()).toMatch(
+            new RegExp(
+                `\\.${cssClass(heading)} ?\\{[^}]*-webkit-line-clamp: ?2`
+            )
+        );
+    });
+
+    it('leaves out revisit tiles when the study-history lookup fails, and logs why', async () => {
+        const failure = new Error('IndexedDB unavailable');
+        lastStudiedSpy.mockRejectedValue(failure);
+        fetchMock.mockImplementation(() =>
+            withLibrary(...recent(), staleSet())
+        );
+        renderExplore();
+
+        const articles = await screen.findAllByRole('article');
+        expect(articles).toHaveLength(3);
+        expect(screen.queryByText('tile.revisit')).toBeNull();
+        expect(screen.getByRole('list').getAttribute('aria-busy')).toBe(
+            'false'
+        );
+        expect(console.error).toHaveBeenCalledWith(
+            'Failed to read study history:',
+            failure
+        );
     });
 });

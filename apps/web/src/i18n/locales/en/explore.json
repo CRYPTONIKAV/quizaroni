@@ -8,6 +8,9 @@
     },
     "tile": {
         "jumpBackIn": "Jump back in",
+        "favorite": "Favorite",
+        "revisit": "Revisit",
+        "previews": "Terms in this set",
         "untitled": "Untitled set",
         "cardCount_one": "{{count}} card",
         "cardCount_other": "{{count}} cards",

@@ -8,6 +8,9 @@
     },
     "tile": {
         "jumpBackIn": "Continúa donde lo dejaste",
+        "favorite": "Favorito",
+        "revisit": "Para retomar",
+        "previews": "Términos de este set",
         "untitled": "Set sin título",
         "cardCount_one": "{{count}} tarjeta",
         "cardCount_other": "{{count}} tarjetas",

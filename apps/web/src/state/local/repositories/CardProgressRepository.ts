@@ -83,6 +83,23 @@ export class CardProgressRepository {
         return counts;
     }
 
+    // Latest lastStudied per set, in epoch ms. Legacy rows with no set and
+    // timestamps that don't parse are skipped.
+    async getLastStudiedBySet(): Promise<Map<UUID, number>> {
+        await this.ensureMigrated();
+        const rows = await this.db.cardProgress.toArray();
+        const latest = new Map<UUID, number>();
+        for (const { studysetUUID, lastStudied } of rows) {
+            if (!studysetUUID) continue;
+            const time = Date.parse(lastStudied);
+            if (!Number.isFinite(time)) continue;
+            if (time > (latest.get(studysetUUID) ?? -Infinity)) {
+                latest.set(studysetUUID, time);
+            }
+        }
+        return latest;
+    }
+
     // ===== Write =====
 
     async upsert(

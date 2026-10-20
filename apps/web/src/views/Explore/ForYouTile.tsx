@@ -4,7 +4,13 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { STUDY_MODES } from 'shared/constants';
 import type { EffectiveStreak } from 'shared/utilities/gamification';
-import { DueSummary, ForYouTileData, SetTileKind } from './forYou';
+import {
+    DueSummary,
+    ForYouTileData,
+    REVISIT_PREVIEW_CHARS,
+    REVISIT_PREVIEW_COUNT,
+    SetTileKind,
+} from './forYou';
 import {
     TileArticle,
     TileDescription,
@@ -12,11 +18,17 @@ import {
     TileFooter,
     TileLink,
     TileMeta,
+    TilePreviewItem,
+    TilePreviewList,
+    TilePreviewTerm,
     TileTitle,
 } from './ExploreStyles';
+import { buildTermPreviews } from './termPreviews';
 
 const KIND_LABEL_KEYS: Partial<Record<SetTileKind, string>> = {
     jumpBackIn: 'tile.jumpBackIn',
+    favorite: 'tile.favorite',
+    revisit: 'tile.revisit',
 };
 
 // The theme's contained button lifts on hover and has no focus outline, so
@@ -107,16 +119,41 @@ const ForYouTile = ({ tile, index }: Props) => {
     // The list isn't schema-checked strictly, so don't trust the text fields.
     const name = typeof title === 'string' ? title.trim() : '';
     const blurb = typeof description === 'string' ? description.trim() : '';
+    // Previews replace the description, and need the title kept to one line
+    // to fit. A set with no text terms keeps the usual layout.
+    const previews =
+        tile.kind === 'revisit'
+            ? buildTermPreviews(
+                  cards,
+                  REVISIT_PREVIEW_COUNT,
+                  REVISIT_PREVIEW_CHARS
+              )
+            : [];
+    const hasPreviews = previews.length > 0;
 
     return (
         <TileArticle interactive style={{ animationDelay: delay }}>
             {labelKey && <TileEyebrow>{t(labelKey)}</TileEyebrow>}
-            <TileTitle>
+            <TileTitle lines={hasPreviews ? 1 : 2}>
                 <TileLink to={`/view/${studysetUUID}`}>
                     {name || t('tile.untitled')}
                 </TileLink>
             </TileTitle>
-            {blurb && <TileDescription>{blurb}</TileDescription>}
+            {/* role="list": WebKit drops list semantics, and with them the
+                label, from a ul with list-style: none. */}
+            {hasPreviews && (
+                <TilePreviewList role="list" aria-label={t('tile.previews')}>
+                    {previews.map(({ term, definition }, i) => (
+                        <TilePreviewItem key={i}>
+                            <TilePreviewTerm>{term}</TilePreviewTerm>
+                            {definition && ` — ${definition}`}
+                        </TilePreviewItem>
+                    ))}
+                </TilePreviewList>
+            )}
+            {!hasPreviews && blurb && (
+                <TileDescription>{blurb}</TileDescription>
+            )}
             <TileMeta>{t('tile.cardCount', { count: cards.length })}</TileMeta>
         </TileArticle>
     );

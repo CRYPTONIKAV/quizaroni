@@ -107,3 +107,52 @@ describe('CardProgressRepository.getDueCountsBySet', () => {
         expect(Object.fromEntries(counts)).toEqual({ A: 1 });
     });
 });
+
+describe('CardProgressRepository.getLastStudiedBySet', () => {
+    let repo: CardProgressRepository;
+
+    beforeEach(() => {
+        repo = new CardProgressRepository();
+    });
+
+    afterEach(async () => {
+        await resetDatabase();
+    });
+
+    const studied = (
+        cardUUID: string,
+        studysetUUID: string,
+        lastStudied: string
+    ): LocalCardProgress => ({
+        ...row(cardUUID, studysetUUID, PAST),
+        lastStudied,
+    });
+
+    it('returns the latest study time per set', async () => {
+        await seed([
+            studied('a1', 'A', OLDER),
+            studied('a2', 'A', PAST),
+            studied('b1', 'B', OLDER),
+        ]);
+        expect(Object.fromEntries(await repo.getLastStudiedBySet())).toEqual({
+            A: Date.parse(PAST),
+            B: Date.parse(OLDER),
+        });
+    });
+
+    it('skips legacy rows with no set and unparsable times', async () => {
+        await seed([
+            studied('l1', '', PAST),
+            studied('a1', 'A', 'not-a-date'),
+            studied('b1', 'B', 'not-a-date'),
+            studied('b2', 'B', OLDER),
+        ]);
+        expect(Object.fromEntries(await repo.getLastStudiedBySet())).toEqual({
+            B: Date.parse(OLDER),
+        });
+    });
+
+    it('returns an empty map when nothing has been studied', async () => {
+        expect((await repo.getLastStudiedBySet()).size).toBe(0);
+    });
+});

@@ -12,6 +12,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDueCountsBySet } from 'shared/hooks/useDueCountsBySet';
 import { useEffectiveStreak } from 'shared/hooks/useEffectiveStreak';
+import { useLastStudiedBySet } from 'shared/hooks/useLastStudiedBySet';
 import { isCompleteStudyset, useGetAllStudysets } from 'state/api/studysetsAPI';
 import { HomeContainer, HomePage, HomePaper } from 'views/Home/HomeStyles';
 import {
@@ -19,7 +20,9 @@ import {
     FOR_YOU_MAX_TILES,
     composeForYou,
     hasCompleteStudysets,
+    selectFavorites,
     selectJumpBackIn,
+    selectRevisit,
     summarizeDue,
 } from './forYou';
 import ForYouSection from './ForYouSection';
@@ -49,6 +52,7 @@ const Explore = () => {
         [data]
     );
     const dueCounts = useDueCountsBySet(librarySets);
+    const lastStudied = useLastStudiedBySet();
     const { days, atRisk } = useEffectiveStreak();
 
     const tiles = useMemo(
@@ -58,10 +62,14 @@ const Explore = () => {
                     due: dueCounts ? summarizeDue(dueCounts) : null,
                     streak: { days, atRisk },
                     jumpBackIn: selectJumpBackIn(librarySets),
+                    favorite: selectFavorites(librarySets),
+                    revisit: lastStudied
+                        ? selectRevisit(librarySets, lastStudied, new Date())
+                        : [],
                 },
                 cap
             ),
-        [dueCounts, days, atRisk, librarySets, cap]
+        [dueCounts, lastStudied, days, atRisk, librarySets, cap]
     );
     const hasSets = hasCompleteStudysets(data?.studysets);
 
@@ -106,8 +114,9 @@ const Explore = () => {
             );
         }
         // Wait for the due tile, which ranks first, so it doesn't push the
-        // other tiles down when it arrives.
-        if (dueCounts === undefined) {
+        // other tiles down when it arrives. Also wait for study history, or a
+        // revisit tile could show for a set studied recently and then vanish.
+        if (dueCounts === undefined || lastStudied === undefined) {
             return (
                 <ForYouSection
                     tiles={[]}
