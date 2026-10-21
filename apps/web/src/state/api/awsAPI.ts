@@ -16,6 +16,19 @@ export const setAccessTokenGetter = (getter: AccessTokenGetter): void => {
     getAccessToken = getter;
 };
 
+export class HttpError extends Error {
+    constructor(
+        public status: number,
+        message: string
+    ) {
+        super(message);
+        this.name = 'HttpError';
+    }
+}
+
+export const isHttpStatus = (error: unknown, status: number): boolean =>
+    error instanceof HttpError && error.status === status;
+
 // A non-2xx response was being parsed as if it were success data at nearly
 // every call site (only studysetsAPI.ts's update-studyset checked
 // response.ok), then handed to validate(), which logs-and-swallows schema
@@ -30,7 +43,8 @@ export const fetchJson = async <T>(
     const response = await fetch(url, init);
     if (!response.ok) {
         const bodyText = await response.text().catch(() => '');
-        throw new Error(
+        throw new HttpError(
+            response.status,
             `Request to ${url} failed with status ${response.status}${
                 bodyText ? `: ${bodyText}` : ''
             }`

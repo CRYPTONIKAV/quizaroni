@@ -41,14 +41,20 @@ const toGalleryFiles = (
             size: 0,
         }));
 
+type Props = {
+    showSignupCta?: boolean;
+};
+
 /**
  * Read-only, unauthenticated view of a publicly-shared study set. This is what
  * logged-out visitors (and social/link recipients) land on at `/view/:id`. It
  * only talks to the public endpoint — no user, sync, or mutation hooks — so it
  * never fires an authorized request. Owners viewing while logged in continue to
- * get the full `ViewStudySet` experience (routed in AppRoutes).
+ * get the full `ViewStudySet` experience (routed in AppRoutes). `ViewStudySet`
+ * also falls back to this view, with the sign-up CTA hidden, when a logged-in
+ * user opens a set that isn't in their library.
  */
-const PublicStudySet = () => {
+const PublicStudySet = ({ showSignupCta = true }: Props) => {
     const { t } = useTranslation();
     const { id: studysetUUID = '' } = useParams();
 
@@ -167,35 +173,37 @@ const PublicStudySet = () => {
             </Stack>
 
             {/* Conversion CTA — turns a shared link into a signup. */}
-            <Paper
-                elevation={0}
-                sx={{
-                    mt: 4,
-                    p: { xs: 3, sm: 4 },
-                    textAlign: 'center',
-                    bgcolor: 'action.hover',
-                    borderRadius: 2,
-                }}
-            >
-                <SchoolIcon color="primary" sx={{ fontSize: 40, mb: 1 }} />
-                <Typography variant="h6" fontWeight={700}>
-                    {t('publicView.ctaTitle')}
-                </Typography>
-                <Typography
-                    color="text.secondary"
-                    sx={{ mt: 1, mb: 2, maxWidth: 480, mx: 'auto' }}
+            {showSignupCta && (
+                <Paper
+                    elevation={0}
+                    sx={{
+                        mt: 4,
+                        p: { xs: 3, sm: 4 },
+                        textAlign: 'center',
+                        bgcolor: 'action.hover',
+                        borderRadius: 2,
+                    }}
                 >
-                    {t('publicView.ctaSubtitle')}
-                </Typography>
-                <Button
-                    variant="contained"
-                    size="large"
-                    component={RouterLink}
-                    to="/signUp"
-                >
-                    {t('publicView.ctaButton')}
-                </Button>
-            </Paper>
+                    <SchoolIcon color="primary" sx={{ fontSize: 40, mb: 1 }} />
+                    <Typography variant="h6" fontWeight={700}>
+                        {t('publicView.ctaTitle')}
+                    </Typography>
+                    <Typography
+                        color="text.secondary"
+                        sx={{ mt: 1, mb: 2, maxWidth: 480, mx: 'auto' }}
+                    >
+                        {t('publicView.ctaSubtitle')}
+                    </Typography>
+                    <Button
+                        variant="contained"
+                        size="large"
+                        component={RouterLink}
+                        to="/signUp"
+                    >
+                        {t('publicView.ctaButton')}
+                    </Button>
+                </Paper>
+            )}
 
             <Box sx={{ height: 32 }} />
         </Container>

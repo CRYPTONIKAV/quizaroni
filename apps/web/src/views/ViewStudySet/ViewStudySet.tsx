@@ -23,6 +23,7 @@ import {
   useGetStudyset,
   useUpdateStudyset,
 } from "state/api/studysetsAPI";
+import { isHttpStatus } from "state/api/awsAPI";
 import { useGetUser } from "state/api/usersAPI";
 import {
   DEFAULT_CATEGORIES,
@@ -71,6 +72,7 @@ import {
 } from "./styles";
 import NotesDrawer from "./NotesDrawer/NotesDrawer";
 import AIChatPanel from "./AIChatPanel/AIChatPanel";
+import PublicStudySet from "views/PublicStudySet/PublicStudySet";
 import { useViewSetsStore } from "state/stores/viewSets";
 import { useAIChatStore } from "state/stores/aiChat";
 import { useGlobalStore } from "state/stores/global";
@@ -105,12 +107,15 @@ const ViewStudySet = (props: Props) => {
     isLoading: isStudySetLoading,
     isSuccess: isStudySetSuccess,
     isFetchedAfterMount: isStudySetFetchedAfterMount,
+    error: studySetError,
   } = useGetStudyset({ studysetUUID }, { refetchOnMount: "always" });
   const selectedStudyset = studysetResponse?.studyset ?? ({} as Studyset);
   const isOwnedSetLoaded =
     isStudySetSuccess &&
     isStudySetFetchedAfterMount &&
     studysetResponse?.studyset?.studysetUUID === studysetUUID;
+  // Someone else's set (or a missing one): show the read-only public view (#133).
+  const isOutsideLibrary = isHttpStatus(studySetError, 404);
 
   const { mutate: updateStudySet } = useUpdateStudyset();
 
@@ -279,6 +284,10 @@ const ViewStudySet = (props: Props) => {
   };
 
   const padding = getPadding();
+
+  if (isOutsideLibrary) {
+    return <PublicStudySet showSignupCta={false} />;
+  }
 
   return (
     <>

@@ -6,8 +6,10 @@ import {
     isCompleteStudyset,
     PublishStudysetError,
     useGetAllStudysets,
+    useGetStudyset,
     usePublishStudyset,
 } from './studysetsAPI';
+import { isHttpStatus } from './awsAPI';
 
 const ID = '11111111-1111-4111-8111-111111111111';
 const OWNER = '33333333-3333-4333-8333-333333333333';
@@ -105,6 +107,46 @@ describe('useGetAllStudysets', () => {
             expect.stringContaining('validation failed'),
             expect.anything()
         );
+    });
+});
+
+describe('useGetStudyset', () => {
+    afterEach(() => {
+        vi.unstubAllGlobals();
+    });
+
+    const renderGetStudyset = (status: number) => {
+        const fetchMock = vi.fn(() =>
+            Promise.resolve(new Response('{}', { status }))
+        );
+        vi.stubGlobal('fetch', fetchMock);
+        // No retry default here, so the hook's own retry policy is what runs.
+        const qc = new QueryClient({
+            defaultOptions: { queries: { retryDelay: 0 } },
+        });
+        const wrapper = ({ children }: { children: React.ReactNode }) => (
+            <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+        );
+        const { result } = renderHook(
+            () => useGetStudyset({ studysetUUID: ID }),
+            { wrapper }
+        );
+        return { fetchMock, result };
+    };
+
+    it('does not retry a 404', async () => {
+        const { fetchMock, result } = renderGetStudyset(404);
+
+        await waitFor(() => expect(result.current.isError).toBe(true));
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        expect(isHttpStatus(result.current.error, 404)).toBe(true);
+    });
+
+    it('still retries a server error', async () => {
+        const { fetchMock, result } = renderGetStudyset(500);
+
+        await waitFor(() => expect(result.current.isError).toBe(true));
+        expect(fetchMock).toHaveBeenCalledTimes(3);
     });
 });
 

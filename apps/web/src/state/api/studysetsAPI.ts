@@ -4,7 +4,12 @@ import {
     useQueryClient,
     UseQueryOptions,
 } from '@tanstack/react-query';
-import { BASE_API_URL, fetchJson, getCommonPostRequestProps } from './awsAPI';
+import {
+    BASE_API_URL,
+    fetchJson,
+    getCommonPostRequestProps,
+    isHttpStatus,
+} from './awsAPI';
 import { validate } from 'shared/validation';
 import {
     BaseResponseSchema,
@@ -137,6 +142,10 @@ export const useGetStudyset = (
                 context: 'GetStudyset',
             });
         },
+        // A 404 means the set isn't in your library; retrying only delays the
+        // public fallback in ViewStudySet.
+        retry: (failureCount, error) =>
+            !isHttpStatus(error, 404) && failureCount < 2,
         ...options,
     });
 };

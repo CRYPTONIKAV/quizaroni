@@ -21,13 +21,18 @@ type RequestBody = {
     studysetUUID: string;
 };
 
+const notFound = (): APIGatewayProxyResultV2 => ({
+    statusCode: 404,
+    body: JSON.stringify({ message: "Study set not found in your library." }),
+});
+
 export const handler: Handler = async (
     event: APIGatewayProxyEventV2WithLambdaAuthorizer<AuthorizerContext>,
     context
 ): Promise<APIGatewayProxyResultV2> => {
     console.log(JSON.stringify({ event, context }, null, 4));
 
-    const { sub: userUUID, username } = event.requestContext.authorizer.lambda
+    const { sub: userUUID } = event.requestContext.authorizer.lambda
     const body: RequestBody = JSON.parse(event.body ?? "{}");
     console.log(JSON.stringify({body}, null, 4));
 
@@ -40,14 +45,19 @@ export const handler: Handler = async (
                 SK: `studyset#${studysetUUID}`,
             },
             TableName: mainTable,
+            // A 404 now skips retries and shows the public fallback, so a stale
+            // read right after create must not miss (#133).
+            ConsistentRead: true,
         })
         // TODO: Think about shared sessions
 
         const result = await docClient.send(getCommand);
         const studyset = result.Item;
 
-        if (!studyset) {
-            throw new Error(`Studyset with UUID ${studysetUUID} for user ${username} not found`)
+        // An upsert stub (#127, #146) can sit under someone else's id with no
+        // studysetUUID; it isn't the caller's set either.
+        if (!studyset || studyset.studysetUUID !== studysetUUID) {
+            return notFound();
         }
 
         removeKeys(studyset);

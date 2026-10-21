@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { fetchJson } from './awsAPI';
+import { HttpError, fetchJson, isHttpStatus } from './awsAPI';
 
 const mockFetch = (response: Partial<Response> & { json?: () => unknown }) =>
     vi.stubGlobal(
@@ -49,5 +49,29 @@ describe('fetchJson', () => {
         await expect(
             fetchJson('https://example.com/api/thing')
         ).rejects.toThrow(/502/);
+    });
+
+    it('exposes the status on the thrown error', async () => {
+        mockFetch({
+            ok: false,
+            status: 404,
+            text: async () => '{"message":"x"}',
+        });
+
+        const request = fetchJson('https://example.com/api/thing');
+
+        await expect(request).rejects.toBeInstanceOf(HttpError);
+        await expect(request).rejects.toMatchObject({ status: 404 });
+    });
+});
+
+describe('isHttpStatus', () => {
+    it.each([
+        [new HttpError(404, 'x'), true],
+        [new HttpError(500, 'x'), false],
+        [new Error('404'), false],
+        [null, false],
+    ])('isHttpStatus(%o, 404) is %s', (error, expected) => {
+        expect(isHttpStatus(error, 404)).toBe(expected);
     });
 });

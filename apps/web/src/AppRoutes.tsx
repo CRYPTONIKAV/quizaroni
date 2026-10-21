@@ -64,8 +64,10 @@ const AppRoutes = () => {
 
                 {/* Study set view — full owner experience when authenticated,
                     read-only public page (via the no-auth endpoint) otherwise.
-                    Keeping the same URL means existing share links keep working
-                    for logged-out visitors and crawlers. */}
+                    ViewStudySet itself falls back to that public page when the
+                    set isn't in the signed-in user's library. Keeping the same
+                    URL means existing share links keep working for logged-out
+                    visitors and crawlers. */}
                 <Route
                     path="/view/:id"
                     element={

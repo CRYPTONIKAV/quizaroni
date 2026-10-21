@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vite-plus/test';
-import { render, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DEFAULT_USER_RESPONSE } from 'shared/constants';
@@ -104,6 +104,18 @@ const json = (status: number, body: unknown) =>
 
 type GetStudysetHandler = (requestedId: string) => Promise<Response>;
 let getStudyset: GetStudysetHandler;
+type PublicHandler = () => Promise<Response>;
+let getPublicStudyset: PublicHandler;
+
+const publicSet = () => ({
+    title: "Someone else's set",
+    description: '',
+    username: 'other',
+    subject: null,
+    publishedAt: null,
+    updatedAt: NOW,
+    cards: [{ term: 'Term', definition: 'Definition', files: [] }],
+});
 
 const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
@@ -121,6 +133,9 @@ const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
         const { studysetUUID } = JSON.parse(String(init?.body ?? '{}'));
         return json(200, { message: 'ok', studyset: ownedSet(studysetUUID) });
     }
+    if (url.includes('/public/studyset/')) {
+        return getPublicStudyset();
+    }
     return json(404, { message: 'not found' });
 });
 
@@ -129,11 +144,19 @@ const callsTo = (suffix: string) =>
 const updateCalls = () => callsTo('/studysets/update-studyset');
 const updateBody = (index: number) =>
     JSON.parse(String(updateCalls()[index]?.[1]?.body));
+const publicCalls = () =>
+    fetchMock.mock.calls.filter(([input]) =>
+        String(input).includes('/public/studyset/')
+    );
 
 // staleTime mirrors state/queryClient.ts so cached data behaves as in the app.
+// useGetStudyset sets its own retry, which beats retry: false here, so
+// retryDelay: 0 keeps its retries fast.
 const renderView = (seed?: (qc: QueryClient) => void) => {
     const qc = new QueryClient({
-        defaultOptions: { queries: { retry: false, staleTime: 1000 * 60 * 5 } },
+        defaultOptions: {
+            queries: { retry: false, retryDelay: 0, staleTime: 1000 * 60 * 5 },
+        },
     });
     seed?.(qc);
     const tree = () => (
@@ -147,21 +170,22 @@ const renderView = (seed?: (qc: QueryClient) => void) => {
     return { qc, container: result.container, rerender: () => result.rerender(tree()) };
 };
 
+beforeEach(() => {
+    routeId = ID1;
+    getPublicStudyset = () => json(404, { message: 'not found' });
+    fetchMock.mockClear();
+    vi.stubGlobal('fetch', fetchMock);
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+});
+
+afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+});
+
 describe('ViewStudySet lastViewed', () => {
-    beforeEach(() => {
-        routeId = ID1;
-        fetchMock.mockClear();
-        vi.stubGlobal('fetch', fetchMock);
-        vi.spyOn(console, 'error').mockImplementation(() => {});
-    });
-
-    afterEach(() => {
-        vi.unstubAllGlobals();
-        vi.restoreAllMocks();
-    });
-
-    it('does not call update-studyset when the set is not in your library', async () => {
-        getStudyset = () => json(500, { message: 'Studyset not found' });
+    it('does not call update-studyset when get-studyset fails with a server error', async () => {
+        getStudyset = () => json(500, { message: 'boom' });
         const { qc, container } = renderView();
 
         await waitFor(() =>
@@ -206,7 +230,7 @@ describe('ViewStudySet lastViewed', () => {
     });
 
     it('does not trust a cached copy of a set that has since been deleted', async () => {
-        getStudyset = () => json(500, { message: 'Studyset not found' });
+        getStudyset = () => json(404, { message: 'not found' });
         const { qc } = renderView((client) =>
             client.setQueryData(['studysets', ID1], { studyset: ownedSet(ID1) })
         );
@@ -214,6 +238,7 @@ describe('ViewStudySet lastViewed', () => {
         await waitFor(() =>
             expect(qc.getQueryState(['studysets', ID1])?.status).toBe('error')
         );
+        await screen.findByText('publicView.unavailableTitle');
         expect(qc.getMutationCache().getAll()).toHaveLength(0);
         expect(updateCalls()).toHaveLength(0);
     });
@@ -242,5 +267,55 @@ describe('ViewStudySet lastViewed', () => {
 
         await waitFor(() => expect(updateCalls()).toHaveLength(2));
         expect(updateBody(1)).toMatchObject({ studysetUUID: ID2 });
+    });
+});
+
+describe('ViewStudySet for a set outside your library', () => {
+    it("shows another user's public set read-only, with no writes and no sign-up CTA", async () => {
+        getStudyset = () => json(404, { message: 'not found' });
+        getPublicStudyset = () => json(200, { studyset: publicSet() });
+        const { qc } = renderView();
+
+        await screen.findByText("Someone else's set");
+
+        expect(screen.queryByText('publicView.ctaButton')).toBeNull();
+        expect(screen.queryByText('viewStudySet.backToStudySets')).toBeNull();
+        expect(callsTo('/studysets/get-studyset')).toHaveLength(1);
+        expect(updateCalls()).toHaveLength(0);
+        expect(qc.getMutationCache().getAll()).toHaveLength(0);
+    });
+
+    it('shows the unavailable state when the set is private or missing', async () => {
+        getStudyset = () => json(404, { message: 'not found' });
+        renderView();
+
+        await screen.findByText('publicView.unavailableTitle');
+
+        expect(updateCalls()).toHaveLength(0);
+    });
+});
+
+describe('ViewStudySet for your own set', () => {
+    it('renders the owner view and never calls the public endpoint', async () => {
+        getStudyset = () => json(200, { studyset: ownedSet(ID1) });
+        renderView();
+
+        await screen.findByText('viewStudySet.backToStudySets');
+        await waitFor(() => expect(updateCalls()).toHaveLength(1));
+        expect(publicCalls()).toHaveLength(0);
+    });
+
+    it('does not fall back on a server error', async () => {
+        getStudyset = () => json(500, { message: 'boom' });
+        const { container } = renderView();
+
+        await waitFor(() =>
+            expect(callsTo('/studysets/get-studyset').length).toBeGreaterThan(0)
+        );
+        await waitFor(() =>
+            expect(container.querySelector('.MuiSkeleton-root')).toBeNull()
+        );
+        expect(screen.getByText('viewStudySet.backToStudySets')).toBeTruthy();
+        expect(publicCalls()).toHaveLength(0);
     });
 });

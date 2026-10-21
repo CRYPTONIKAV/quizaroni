@@ -76,14 +76,14 @@ const fetchMock = vi.fn((input: RequestInfo | URL) =>
         : json(404, { message: 'not found' })
 );
 
-const renderView = () => {
+const renderView = (props: { showSignupCta?: boolean } = {}) => {
     const qc = new QueryClient({
         defaultOptions: { queries: { retry: false } },
     });
     return render(
         <ThemeProvider theme={muiTheme}>
             <QueryClientProvider client={qc}>
-                <PublicStudySet />
+                <PublicStudySet {...props} />
             </QueryClientProvider>
         </ThemeProvider>
     );
@@ -150,5 +150,24 @@ describe('PublicStudySet', () => {
             expect.stringContaining('validation failed'),
             expect.anything()
         );
+    });
+
+    it('shows the sign-up call to action by default', async () => {
+        response = () => json(200, { studyset: publicSet() });
+        renderView();
+
+        await screen.findByText('Cell biology');
+
+        expect(screen.getByText('publicView.ctaButton')).toBeTruthy();
+    });
+
+    it('hides the sign-up call to action when showSignupCta is false', async () => {
+        response = () => json(200, { studyset: publicSet() });
+        renderView({ showSignupCta: false });
+
+        await screen.findByText('Cell biology');
+
+        expect(screen.queryByText('publicView.ctaButton')).toBeNull();
+        expect(screen.queryByText('publicView.ctaTitle')).toBeNull();
     });
 });
