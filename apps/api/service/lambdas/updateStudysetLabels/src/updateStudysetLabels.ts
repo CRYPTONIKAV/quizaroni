@@ -6,7 +6,7 @@ import {
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { AuthorizerContext } from "models/auth";
-import { buildLabelUpdateInput } from "lambdas/batchUpdateStudysetLabels/src/batchUpdateStudysetLabels";
+import { buildLabelUpdateInput } from "utilities/labels";
 
 const { mainTable = "" } = process.env;
 
@@ -21,15 +21,18 @@ type RequestBody = {
     studysetUUID: string;
 };
 
-const isValidBody = (value: unknown): value is RequestBody =>
-    typeof value === "object" &&
-    value !== null &&
-    typeof (value as RequestBody).studysetUUID === "string" &&
-    (value as RequestBody).studysetUUID !== "" &&
-    Array.isArray((value as RequestBody).labels) &&
-    (value as RequestBody).labels.every(
-        (label: unknown) => typeof label === "string"
+const isValidBody = (value: unknown): value is RequestBody => {
+    if (typeof value !== "object" || value === null) {
+        return false;
+    }
+    const { studysetUUID, labels } = value as Partial<Record<keyof RequestBody, unknown>>;
+    return (
+        typeof studysetUUID === "string" &&
+        studysetUUID !== "" &&
+        Array.isArray(labels) &&
+        labels.every((label: unknown) => typeof label === "string")
     );
+};
 
 export const handler: Handler = async (
     event: APIGatewayProxyEventV2WithLambdaAuthorizer<AuthorizerContext>,
@@ -42,14 +45,8 @@ export const handler: Handler = async (
     let body: unknown;
     try {
         body = JSON.parse(event.body ?? "{}");
-    } catch (err) {
-        console.error(err);
-        return {
-            statusCode: 400,
-            body: JSON.stringify({
-                message: INVALID_BODY_MESSAGE,
-            }),
-        };
+    } catch {
+        body = undefined;
     }
 
     if (!isValidBody(body)) {
@@ -66,11 +63,6 @@ export const handler: Handler = async (
     try {
         const updatedAt = new Date().toISOString();
 
-        // DynamoDB's UpdateItem upserts, so an UpdateCommand with no condition
-        // would create a stub studyset#<id> item for an unknown or deleted id.
-        // buildLabelUpdateInput sets labels/updatedAt/updatedBy and guards the
-        // write with attribute_exists(PK), the same contract as the batch
-        // endpoint (#124, #144).
         const updateLabelsCommand = new UpdateCommand(
             buildLabelUpdateInput({
                 tableName: mainTable,
@@ -90,9 +82,7 @@ export const handler: Handler = async (
             }),
         };
     } catch (err) {
-        console.error(err);
-        const name = (err as { name?: string })?.name;
-        if (name === "ConditionalCheckFailedException") {
+        if ((err as { name?: string })?.name === "ConditionalCheckFailedException") {
             return {
                 statusCode: 404,
                 body: JSON.stringify({
@@ -101,6 +91,7 @@ export const handler: Handler = async (
             };
         }
 
+        console.error(err);
         return {
             statusCode: 500,
             body: JSON.stringify({

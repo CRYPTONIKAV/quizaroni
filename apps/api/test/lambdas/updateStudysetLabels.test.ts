@@ -4,14 +4,11 @@ import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 // UpdateCommand with no existence condition. DynamoDB's UpdateItem upserts,
 // so an unknown or deleted studysetUUID created a stub studyset#<id> item
 // holding only labels, and a missing studysetUUID defaulted to "" and
-// created a studyset# stub. The write now reuses buildLabelUpdateInput
-// (#144), which sets updatedBy and guards with attribute_exists(PK), so an
-// unknown id is rejected with 404 and a malformed body with 400.
+// created a studyset# stub. The write now goes through buildLabelUpdateInput,
+// so an unknown id is rejected with 404 and a malformed body with 400.
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let handler: (event: any, context: any) => Promise<{ statusCode: number; body: string }>;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let buildLabelUpdateInput: (args: any) => any;
 
 const spySend = () => jest.spyOn(DynamoDBDocumentClient.prototype, "send");
 let send: ReturnType<typeof spySend>;
@@ -30,9 +27,7 @@ const captureInputs = () => {
 beforeAll(() => {
     process.env.mainTable = "test-main";
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const batch = require("lambdas/batchUpdateStudysetLabels/src/batchUpdateStudysetLabels");
     ({ handler } = require("lambdas/updateStudysetLabels/src/updateStudysetLabels"));
-    ({ buildLabelUpdateInput } = batch);
 });
 
 beforeEach(() => {
@@ -45,12 +40,15 @@ afterEach(() => {
     jest.restoreAllMocks();
 });
 
-const invoke = async (body: unknown) => {
+const invoke = async (
+    body: unknown,
+    lambda: { sub: string; username?: string } = { sub: "u1", username: "turtles" }
+) => {
     const raw =
         typeof body === "string" ? body : JSON.stringify(body);
     const res = await handler(
         {
-            requestContext: { authorizer: { lambda: { sub: "u1", username: "turtles" } } },
+            requestContext: { authorizer: { lambda } },
             body: raw,
         },
         {}
@@ -64,25 +62,13 @@ const conditionalFail = () =>
     });
 
 describe("updateStudysetLabels", () => {
-    it("guards the write with attribute_exists(PK), so an unknown id cannot be upserted", async () => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        send.mockRejectedValueOnce(conditionalFail() as never);
+    it("guards the write it sends with attribute_exists(PK), so an unknown id cannot be upserted", async () => {
+        const inputs = captureInputs();
 
-        const { statusCode, body } = await invoke({
-            studysetUUID: "s1",
-            labels: ["biology"],
-        });
+        await invoke({ studysetUUID: "s1", labels: ["biology"] });
 
-        expect(statusCode).toBe(404);
-        expect(body.message).toBe("Studyset not found");
-        expect(buildLabelUpdateInput({
-            tableName: "test-main",
-            userUUID: "u1",
-            username: "turtles",
-            studysetUUID: "s1",
-            labels: ["biology"],
-            updatedAt: "2026-10-15T00:00:00.000Z",
-        }).ConditionExpression).toBe("attribute_exists(PK)");
+        expect(inputs).toHaveLength(1);
+        expect(inputs[0].ConditionExpression).toBe("attribute_exists(PK)");
     });
 
     it("only touches labels, updatedAt and updatedBy on success", async () => {
@@ -110,22 +96,37 @@ describe("updateStudysetLabels", () => {
         expect("Item" in inputs[0]).toBe(false);
     });
 
+    it("still writes when the token has no username", async () => {
+        const inputs = captureInputs();
+
+        const { statusCode } = await invoke(
+            { studysetUUID: "s1", labels: ["biology"] },
+            { sub: "u1" }
+        );
+
+        expect(statusCode).toBe(200);
+        expect(inputs[0].ExpressionAttributeValues).not.toHaveProperty(":updatedBy");
+    });
+
     it("returns 404 only for the conditional failure, 500 otherwise", async () => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        send.mockImplementation(async (cmd: any) => {
-            if (cmd.input.Key.SK === "studyset#s1") {
-                throw new Error("network down");
-            }
-            return {} as never;
-        });
+        send.mockRejectedValueOnce(conditionalFail() as never);
+        const notFound = await invoke({ studysetUUID: "s1", labels: ["biology"] });
 
-        const { statusCode, body } = await invoke({
-            studysetUUID: "s1",
-            labels: ["biology"],
-        });
+        send.mockRejectedValueOnce(new Error("network down") as never);
+        const failed = await invoke({ studysetUUID: "s1", labels: ["biology"] });
 
-        expect(statusCode).toBe(500);
-        expect(body.message).toBe("Error");
+        expect(notFound.statusCode).toBe(404);
+        expect(notFound.body.message).toBe("Studyset not found");
+        expect(failed.statusCode).toBe(500);
+        expect(failed.body.message).toBe("Error");
+    });
+
+    it("does not log an expected not-found as an error", async () => {
+        send.mockRejectedValueOnce(conditionalFail() as never);
+
+        await invoke({ studysetUUID: "s1", labels: ["biology"] });
+
+        expect(console.error).not.toHaveBeenCalled();
     });
 
     it("returns 400 and does not write for a body without a usable studysetUUID", async () => {
