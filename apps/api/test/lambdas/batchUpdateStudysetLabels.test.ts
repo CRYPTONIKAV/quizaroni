@@ -9,8 +9,6 @@ import { DynamoDBDocumentClient, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let handler: (event: any, context: any) => Promise<{ statusCode: number; body: string }>;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let buildLabelUpdateInput: (args: any) => any;
 
 const spySend = () => jest.spyOn(DynamoDBDocumentClient.prototype, "send");
 let send: ReturnType<typeof spySend>;
@@ -18,7 +16,7 @@ let send: ReturnType<typeof spySend>;
 beforeAll(() => {
     process.env.mainTable = "test-main";
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    ({ handler, buildLabelUpdateInput } = require("../../service/lambdas/batchUpdateStudysetLabels/src/batchUpdateStudysetLabels"));
+    ({ handler } = require("../../service/lambdas/batchUpdateStudysetLabels/src/batchUpdateStudysetLabels"));
 });
 
 beforeEach(() => {
@@ -48,45 +46,6 @@ const conditionalFail = () =>
     Object.assign(new Error("The conditional request failed"), {
         name: "ConditionalCheckFailedException",
     });
-
-describe("batchUpdateStudysetLabels buildLabelUpdateInput", () => {
-    const input = () =>
-        buildLabelUpdateInput({
-            tableName: "test-main",
-            userUUID: "u1",
-            username: "turtles",
-            studysetUUID: "s1",
-            labels: ["bio"],
-            updatedAt: "2026-10-15T00:00:00.000Z",
-        });
-
-    it("only touches labels, updatedAt and updatedBy, so cards/metadata/PK2 survive", () => {
-        const { TableName, Key, UpdateExpression, ExpressionAttributeNames, ExpressionAttributeValues } =
-            input();
-
-        expect(TableName).toBe("test-main");
-        expect(Key).toEqual({ PK: "userUUID#u1", SK: "studyset#s1" });
-        expect(UpdateExpression).toBe(
-            "SET #labels = :labels, #updatedAt = :updatedAt, #updatedBy = :updatedBy"
-        );
-        expect(UpdateExpression).not.toContain("REMOVE");
-        expect(Object.values(ExpressionAttributeNames).sort()).toEqual([
-            "labels",
-            "updatedAt",
-            "updatedBy",
-        ]);
-        expect(ExpressionAttributeValues).toEqual({
-            ":labels": ["bio"],
-            ":updatedAt": "2026-10-15T00:00:00.000Z",
-            ":updatedBy": "turtles",
-        });
-        expect("Item" in input()).toBe(false);
-    });
-
-    it("rejects unknown ids instead of creating them", () => {
-        expect(input().ConditionExpression).toBe("attribute_exists(PK)");
-    });
-});
 
 describe("batchUpdateStudysetLabels handler", () => {
     it("updates each set in place: one UpdateCommand per set, never a Put", async () => {

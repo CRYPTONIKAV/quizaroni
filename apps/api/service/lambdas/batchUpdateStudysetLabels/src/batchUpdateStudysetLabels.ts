@@ -5,12 +5,9 @@ import {
     Handler,
 } from "aws-lambda";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import {
-    DynamoDBDocumentClient,
-    UpdateCommand,
-    UpdateCommandInput,
-} from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { AuthorizerContext } from "models/auth";
+import { buildLabelUpdateInput } from "utilities/labels";
 
 const { mainTable = "" } = process.env;
 
@@ -19,46 +16,6 @@ const docClient = DynamoDBDocumentClient.from(client);
 
 const INVALID_BODY_MESSAGE =
     "studysetUpdates must be an array of [studysetUUID, labels[]] tuples with unique studysetUUIDs";
-
-/**
- * Updates a set's labels in place. This used to be a Put, and a Put replaced
- * the whole item, wiping cards, metadata and the public-index keys (PK2/SK2).
- * The condition stops an unknown id from being created as a stub item.
- */
-export const buildLabelUpdateInput = ({
-    tableName,
-    userUUID,
-    username,
-    studysetUUID,
-    labels,
-    updatedAt,
-}: {
-    tableName: string;
-    userUUID: string;
-    username: string;
-    studysetUUID: string;
-    labels: string[];
-    updatedAt: string;
-}): UpdateCommandInput => ({
-    TableName: tableName,
-    Key: {
-        PK: `userUUID#${userUUID}`,
-        SK: `studyset#${studysetUUID}`,
-    },
-    UpdateExpression:
-        "SET #labels = :labels, #updatedAt = :updatedAt, #updatedBy = :updatedBy",
-    ConditionExpression: "attribute_exists(PK)",
-    ExpressionAttributeNames: {
-        "#labels": "labels",
-        "#updatedAt": "updatedAt",
-        "#updatedBy": "updatedBy",
-    },
-    ExpressionAttributeValues: {
-        ":labels": labels,
-        ":updatedAt": updatedAt,
-        ":updatedBy": username,
-    },
-});
 
 const isValidUpdates = (value: unknown): value is [string, string[]][] =>
     Array.isArray(value) &&
