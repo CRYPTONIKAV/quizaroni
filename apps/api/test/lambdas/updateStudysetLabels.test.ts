@@ -153,4 +153,37 @@ describe("updateStudysetLabels", () => {
         expect(statusCode).toBe(400);
         expect(send).not.toHaveBeenCalled();
     });
+
+    // #179: the handler used to log { event, context }, which put the bearer
+    // token, cookies and the raw body into CloudWatch.
+    it("logs a request summary without the bearer token or the request body", async () => {
+        captureInputs();
+
+        await handler(
+            {
+                headers: { authorization: "Bearer SECRET-TOKEN-123" },
+                cookies: ["session=COOKIE-SENTINEL"],
+                requestContext: {
+                    requestId: "req-1",
+                    routeKey: "POST /api/studysets/update-studyset-labels",
+                    authorizer: { lambda: { sub: "u1", username: "turtles" } },
+                },
+                body: JSON.stringify({ studysetUUID: "s1", labels: ["BODY-SENTINEL"] }),
+            },
+            {}
+        );
+
+        const logged = [
+            ...(console.log as jest.Mock).mock.calls,
+            ...(console.error as jest.Mock).mock.calls,
+        ]
+            .flat()
+            .map((a) => (typeof a === "string" ? a : JSON.stringify(a)))
+            .join("\n");
+
+        expect(logged).not.toContain("SECRET-TOKEN-123");
+        expect(logged).not.toContain("COOKIE-SENTINEL");
+        expect(logged).not.toContain("BODY-SENTINEL");
+        expect(logged).toContain('"req-1"');
+    });
 });

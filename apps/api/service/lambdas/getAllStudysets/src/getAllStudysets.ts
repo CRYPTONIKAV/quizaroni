@@ -9,6 +9,7 @@ import { S3Client } from "@aws-sdk/client-s3";
 import { AuthorizerContext } from "models/auth";
 import { Studyset } from "models/studysets";
 import { regenerateSignedUrlsForStudysets } from "utilities/studysets";
+import { logRequest } from "utilities/logging";
 
 const { mainTable = "", mainBucket = "" } = process.env;
 
@@ -20,7 +21,7 @@ export const handler: Handler = async (
     event: APIGatewayProxyEventV2WithLambdaAuthorizer<AuthorizerContext>,
     context
 ): Promise<APIGatewayProxyResultV2> => {
-    console.log(JSON.stringify({ event, context }, null, 4));
+    logRequest(event);
     const { sub: userUUID } = event.requestContext.authorizer.lambda
 
     try {

@@ -20,6 +20,7 @@ import {
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { writeFile, readFile } from 'fs/promises';
+import { logRequest } from 'utilities/logging';
 
 const { mainTable = '', usersTable = '', mainBucket = '' } = process.env;
 
@@ -38,12 +39,11 @@ export const handler: Handler = async (
     event: APIGatewayProxyEventV2WithLambdaAuthorizer<AuthorizerContext>,
     context
 ): Promise<APIGatewayProxyResultV2> => {
-    console.log(JSON.stringify({ event, context }, null, 4));
+    logRequest(event);
     try {
         const { sub: userUUID, username } =
             event.requestContext.authorizer.lambda;
         const body: RequestBody = JSON.parse(event.body ?? '{}');
-        console.log(JSON.stringify({ body }, null, 4));
 
         const { includeStudysets } = body;
 

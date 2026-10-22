@@ -56,7 +56,14 @@ export const handler: Handler = async (
             },
         };
     } catch (err) {
-        console.error("Authorization failed:", err);
+        // Not the raw error: jose's claim errors carry the decoded token
+        // claims on `payload` (#179).
+        const { name, code, message } = (err ?? {}) as {
+            name?: string;
+            code?: string;
+            message?: string;
+        };
+        console.error("Authorization failed:", JSON.stringify({ name, code, message }));
 
         return {
             isAuthorized: false,

@@ -5,6 +5,7 @@ import {
 } from "aws-lambda";
 import { S3Client, CreateMultipartUploadCommand } from "@aws-sdk/client-s3";
 import { AuthorizerContext } from "models/auth";
+import { logRequest } from "utilities/logging";
 
 const { mainBucket = "" } = process.env;
 
@@ -21,12 +22,11 @@ export const handler: Handler = async (
     event: APIGatewayProxyEventV2WithLambdaAuthorizer<AuthorizerContext>,
     context
 ): Promise<APIGatewayProxyResultV2> => {
-    console.log(JSON.stringify({ event, context }, null, 4));
+    logRequest(event);
     
     const { sub: userUUID, username } = event.requestContext.authorizer.lambda
 
     const body: RequestBody = JSON.parse(event.body ?? "{}");
-    console.log(JSON.stringify({body}, null, 4));
 
     const { contentType, fileName, studysetUUID, uploadType } = body;
     

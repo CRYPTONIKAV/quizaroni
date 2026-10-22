@@ -18,6 +18,7 @@ import {
     toPublicStudyset,
 } from 'utilities/publicStudyset';
 import { regenerateSignedUrls } from 'utilities/studysets';
+import { logRequest } from 'utilities/logging';
 
 const { mainTable = '', mainBucket = '' } = process.env;
 
@@ -46,7 +47,7 @@ export const handler: Handler = async (
     event: APIGatewayProxyEventV2,
     context
 ): Promise<APIGatewayProxyResultV2> => {
-    console.log(JSON.stringify({ event, context }, null, 4));
+    logRequest(event);
 
     const studysetUUID = event.pathParameters?.studysetUUID ?? '';
     if (!studysetUUID) {

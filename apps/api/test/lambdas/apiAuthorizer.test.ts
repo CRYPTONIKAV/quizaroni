@@ -126,6 +126,28 @@ describe("apiAuthorizer", () => {
         expect(result.isAuthorized).toBe(false);
     });
 
+    // #179: jose's JWTExpired/JWTClaimValidationFailed carry the decoded
+    // claims on `payload`, so logging the raw error wrote them to CloudWatch.
+    it("does not log the token's claims when it rejects one", async () => {
+        const error = jest.spyOn(console, "error").mockImplementation(() => {});
+        const token = await signToken(
+            { sub: "user-123", username: "yusufaf" },
+            { expired: true }
+        );
+
+        await handler(buildEvent(`Bearer ${token}`), {}, {});
+
+        const logged = error.mock.calls
+            .flat()
+            .map((a) => (typeof a === "string" ? a : JSON.stringify(a)))
+            .join("\n");
+        error.mockRestore();
+        expect(logged).toContain("ERR_JWT_EXPIRED");
+        expect(logged).not.toContain("user-123");
+        expect(logged).not.toContain("yusufaf");
+        expect(logged).not.toContain(token);
+    });
+
     it("rejects a token from an unrecognized issuer", async () => {
         const token = await signToken(
             { sub: "user-123", username: "yusufaf" },

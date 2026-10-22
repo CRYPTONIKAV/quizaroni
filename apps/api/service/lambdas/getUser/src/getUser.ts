@@ -7,6 +7,7 @@ import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, GetCommand } from "@aws-sdk/lib-dynamodb";
 import { AuthorizerContext } from "models/auth";
 import { removeKeys } from "resources/dynamo/utilities";
+import { logRequest } from "utilities/logging";
 
 const { usersTable = "" } = process.env;
 
@@ -19,7 +20,7 @@ export const handler: Handler = async (
     event: APIGatewayProxyEventV2WithLambdaAuthorizer<AuthorizerContext>,
     context
 ): Promise<APIGatewayProxyResultV2> => {
-    console.log(JSON.stringify({ event, context }, null, 4));
+    logRequest(event);
 
     const { sub: userUUID, username } = event.requestContext.authorizer.lambda
 

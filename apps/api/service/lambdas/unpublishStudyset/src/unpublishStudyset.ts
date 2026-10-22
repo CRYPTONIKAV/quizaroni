@@ -8,6 +8,7 @@ import { DynamoDBDocumentClient, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { AuthorizerContext } from 'models/auth';
 import { removeKeys } from 'resources/dynamo/utilities';
 import { buildUnpublishUpdate } from 'utilities/publishStudyset';
+import { logRequest } from 'utilities/logging';
 
 const { mainTable = '' } = process.env;
 
@@ -35,9 +36,10 @@ const parseBody = (raw: string | undefined): { studysetUUID?: string } => {
 export const handler: Handler = async (
     event: APIGatewayProxyEventV2WithLambdaAuthorizer<AuthorizerContext>
 ): Promise<APIGatewayProxyResultV2> => {
+    logRequest(event);
+
     const { sub: userUUID, username } = event.requestContext.authorizer.lambda;
     const body = parseBody(event.body);
-    console.log(JSON.stringify({ requestId: event.requestContext.requestId, userUUID, body }));
 
     const { studysetUUID } = body;
     if (typeof studysetUUID !== 'string' || !studysetUUID) {

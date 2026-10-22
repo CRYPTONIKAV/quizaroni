@@ -10,6 +10,7 @@ import {
     PUBLIC_GSI_INDEX_NAME,
     PUBLIC_STUDYSET_PK,
 } from 'resources/dynamo/publicSharing';
+import { logRequest } from 'utilities/logging';
 
 const { mainTable = '' } = process.env;
 
@@ -36,7 +37,7 @@ export const handler: Handler = async (
     event: APIGatewayProxyEventV2,
     context
 ): Promise<APIGatewayProxyResultV2> => {
-    console.log(JSON.stringify({ event, context }, null, 4));
+    logRequest(event);
 
     try {
         const studysets: PublicStudysetSummary[] = [];

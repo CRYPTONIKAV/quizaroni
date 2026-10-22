@@ -12,6 +12,7 @@ import {
 } from '@aws-sdk/lib-dynamodb';
 import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { AuthorizerContext } from 'models/auth';
+import { logRequest } from 'utilities/logging';
 
 const { mainTable = '' } = process.env;
 
@@ -26,11 +27,10 @@ export const handler: Handler = async (
     event: APIGatewayProxyEventV2WithLambdaAuthorizer<AuthorizerContext>,
     context
 ): Promise<APIGatewayProxyResultV2> => {
-    console.log(JSON.stringify({ event, context }, null, 4));
+    logRequest(event);
 
     const { sub: userUUID, username } = event.requestContext.authorizer.lambda;
     const body: RequestBody = JSON.parse(event.body ?? '{}');
-    console.log(JSON.stringify({ body }, null, 4));
     const { studysetUUIDs } = body;
 
     try {
@@ -51,10 +51,19 @@ export const handler: Handler = async (
             },
         };
 
-        const deleteBatchResponse = await docClient.send(
+        const { UnprocessedItems } = await docClient.send(
             new BatchWriteCommand(batchWriteCommandInput)
         );
-        console.log(JSON.stringify(deleteBatchResponse, null, 4));
+        // Keys only. The full response used to be logged, and that log was the
+        // only trace of a partial delete (#179).
+        const unprocessed = UnprocessedItems?.[mainTable] ?? [];
+        if (unprocessed.length > 0) {
+            console.error(
+                JSON.stringify({
+                    unprocessedKeys: unprocessed.map((request) => request.DeleteRequest?.Key),
+                })
+            );
+        }
 
         // TODO: Delete all associated files
 

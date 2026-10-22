@@ -10,6 +10,7 @@ import { AuthorizerContext } from "models/auth";
 import { Studyset } from "models/studysets";
 import { removeKeys } from "resources/dynamo/utilities";
 import { regenerateSignedUrls } from "utilities/studysets";
+import { logRequest } from "utilities/logging";
 
 const { mainTable = "", mainBucket = "" } = process.env;
 
@@ -30,11 +31,10 @@ export const handler: Handler = async (
     event: APIGatewayProxyEventV2WithLambdaAuthorizer<AuthorizerContext>,
     context
 ): Promise<APIGatewayProxyResultV2> => {
-    console.log(JSON.stringify({ event, context }, null, 4));
+    logRequest(event);
 
     const { sub: userUUID } = event.requestContext.authorizer.lambda
     const body: RequestBody = JSON.parse(event.body ?? "{}");
-    console.log(JSON.stringify({body}, null, 4));
 
     const { studysetUUID } = body;
 

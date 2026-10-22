@@ -34,8 +34,6 @@ export const getStudysetFromDynamo = async ({
         );
     }
 
-    console.log('Studyset returned \n', JSON.stringify(Item, null, 4));
-
     return Item as Studyset;
 };
 

@@ -3,10 +3,11 @@ import {
     APIGatewayProxyResultV2,
     Handler,
 } from "aws-lambda";
-import { DynamoDBClient, ReturnValue } from "@aws-sdk/client-dynamodb";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DeleteCommand, DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { AuthorizerContext } from "models/auth";
+import { logRequest } from "utilities/logging";
 
 const { mainTable = "" } = process.env;
 
@@ -21,11 +22,10 @@ export const handler: Handler = async (
     event: APIGatewayProxyEventV2WithLambdaAuthorizer<AuthorizerContext>,
     context
 ): Promise<APIGatewayProxyResultV2> => {
-    console.log(JSON.stringify({ event, context }, null, 4));
+    logRequest(event);
 
     const { sub: userUUID, username } = event.requestContext.authorizer.lambda
     const body: RequestBody = JSON.parse(event.body ?? "{}");
-    console.log(JSON.stringify({body}, null, 4));
     const { studysetUUID } = body;
 
     try {
@@ -36,11 +36,9 @@ export const handler: Handler = async (
                 PK: `userUUID#${userUUID}`,
                 SK: `studyset#${studysetUUID}`,
             },
-            ReturnValues: ReturnValue.ALL_OLD
         })
 
-        const deleteResponse = await docClient.send(deleteCommand);
-        console.log(JSON.stringify(deleteResponse, null, 4));
+        await docClient.send(deleteCommand);
 
         // TODO: Delete all associated files
 

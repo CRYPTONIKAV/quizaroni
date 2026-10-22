@@ -26,9 +26,11 @@ import {
 } from 'aws-cdk-lib/aws-apigatewayv2';
 import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
-import { LogGroup } from 'aws-cdk-lib/aws-logs';
+import { LogGroup, LogRetention, RetentionDays } from 'aws-cdk-lib/aws-logs';
 import { DEFAULT_ALLOWED_ORIGINS } from '../../constants';
 import apiAuthorizer from '../lambdas/apiAuthorizer/index';
+
+const LOG_RETENTION = RetentionDays.ONE_MONTH;
 
 type CreateLambdaProxyIntegrationProps = {
     lambda: LambdaFunction;
@@ -91,6 +93,7 @@ export class QuizaroniAPI extends Construct {
         const logGroupNameAndID = `${this.prefix}-api-AccessLogs`;
         const accessLogs = new LogGroup(this, logGroupNameAndID, {
             logGroupName: logGroupNameAndID,
+            retention: LOG_RETENTION,
         });
         const stage = api.defaultStage?.node.defaultChild as CfnStage;
         stage.accessLogSettings = {
@@ -145,6 +148,7 @@ export class QuizaroniAPI extends Construct {
 
         const authorizerNameAndID = `${this.prefix}-authorizer`;
         const apiAuthorizerLambda = apiAuthorizer({ ...lambdaProps });
+        this.setLambdaLogRetention(apiAuthorizerLambda, 'apiAuthorizer');
 
         // Grant API Gateway permission to invoke the authorizer Lambda function
         apiAuthorizerLambda.grantInvoke(
@@ -441,6 +445,16 @@ export class QuizaroniAPI extends Construct {
         resource.addMethod(httpMethod, lambdaIntegration, {});
     };
 
+    // LogRetention rather than a LogGroup per function: Lambda already created
+    // the /aws/lambda/* groups, so a CloudFormation-owned group with the same
+    // name would fail to create. Don't read fn.logGroup either, since that adds
+    // its own never-expire retention resource.
+    setLambdaLogRetention = (lambdaFunction: LambdaFunction, lambdaName: string) =>
+        new LogRetention(this, `${this.prefix}-${lambdaName}-log-retention`, {
+            logGroupName: `/aws/lambda/${lambdaFunction.functionName}`,
+            retention: LOG_RETENTION,
+        });
+
     createLambdaHttpIntegration = async ({
         api,
         lambdaProps,
@@ -458,13 +472,15 @@ export class QuizaroniAPI extends Construct {
     }) => {
         const lambdaFunction: (props: LambdaProps) => NodejsFunction =
             await getDefaultExportForLambda(lambdaName);
+        const lambda = lambdaFunction({ ...lambdaProps });
+        this.setLambdaLogRetention(lambda, lambdaName);
 
         api.addRoutes({
             path,
             methods,
             integration: new HttpLambdaIntegration(
                 `${this.deploymentType}-${lambdaName}-integration`,
-                lambdaFunction({ ...lambdaProps }),
+                lambda,
                 {}
             ),
             authorizer,
