@@ -1,6 +1,7 @@
 import type { Studyset } from "models/studysets";
 import { PUBLIC_STUDYSET_PK } from "resources/dynamo/publicSharing";
 import { buildDuplicate } from "utilities/duplicateStudyset";
+import { validatePublishRequest } from "utilities/publishStudyset";
 
 // #125: duplicating a public set used to structuredClone the stored item, so
 // the copy inherited the source's public-index keys (PK2/SK2 pointing at the
@@ -66,6 +67,23 @@ const publicSource = () =>
                 files: [],
             },
         ],
+    }) as unknown as Studyset;
+
+// #169: the owner of a taken-down set could duplicate it and publish the copy.
+const hiddenSource = () =>
+    ({
+        ...publicSource(),
+        metadata: { ...publicSource().metadata, publiclyViewable: false },
+        moderation: { hiddenAt: "2026-10-16T00:00:00.000Z", reason: "spam" },
+        cards: ["c1", "c2", "c3", "c4"].map((cardUUID) => ({
+            cardUUID,
+            term: `Term ${cardUUID}`,
+            definition: `Definition ${cardUUID}`,
+            notes: [],
+            categories: [],
+            important: false,
+            files: [],
+        })),
     }) as unknown as Studyset;
 
 const cardIds = (set: Studyset) => set.cards.map((card) => card.cardUUID);
@@ -144,6 +162,25 @@ describe("buildDuplicate", () => {
             "userUUID",
             "username",
         ]);
+    });
+
+    it("carries a takedown onto the copy (#169)", () => {
+        const copy = buildDuplicate(hiddenSource(), NEW_UUID, NOW);
+
+        expect(copy.moderation).toEqual({
+            hiddenAt: "2026-10-16T00:00:00.000Z",
+            reason: "spam",
+        });
+        expect(validatePublishRequest({ subject: "science", studyset: copy, now: NOW })).toEqual({
+            ok: false,
+            errors: [{ code: "hidden" }],
+        });
+    });
+
+    it("does not carry moderation from a set that isn't hidden", () => {
+        const copy = buildDuplicate(publicSource(), NEW_UUID, NOW);
+
+        expect(Object.prototype.hasOwnProperty.call(copy, "moderation")).toBe(false);
     });
 
     it("does not mutate the source", () => {

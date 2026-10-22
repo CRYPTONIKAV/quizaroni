@@ -2,6 +2,7 @@ import { DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand } from "@
 import { S3Client, CopyObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import type { Studyset } from "models/studysets";
 import { PUBLIC_STUDYSET_PK } from "resources/dynamo/publicSharing";
+import { validatePublishRequest } from "utilities/publishStudyset";
 
 // #125: both duplicate lambdas structuredClone'd the stored item, so a copy of
 // a public set was written with the source's PK2/SK2 (pointing at the source's
@@ -67,6 +68,27 @@ const withPhoto = (uuid: string) => ({
         },
     ],
 });
+
+// #169: a set taken down by scripts/unpublishStudyset.ts, with enough cards
+// that `hidden` is the only reason publish could refuse a copy.
+const HIDDEN_AT = "2026-10-16T00:00:00.000Z";
+const hiddenSource = (uuid: string) => {
+    const { PK2: _PK2, SK2: _SK2, ...source } = publicSource(uuid);
+    return {
+        ...source,
+        metadata: { publiclyViewable: false, terminology: "Term" },
+        moderation: { hiddenAt: HIDDEN_AT, reason: "spam" },
+        cards: ["c1", "c2", "c3", "c4"].map((cardUUID) => ({ cardUUID, term: "t", definition: "d", notes: [] })),
+    };
+};
+
+const expectUnpublishable = (item: Record<string, unknown>) => {
+    expect(item.moderation).toEqual({ hiddenAt: HIDDEN_AT, reason: "spam" });
+    expect(validatePublishRequest({ subject: "science", studyset: item as never, now: HIDDEN_AT })).toEqual({
+        ok: false,
+        errors: [{ code: "hidden" }],
+    });
+};
 
 // Captures each Put item. The clone matters: duplicateStudyset runs removeKeys
 // on the same object after the Put.
@@ -202,6 +224,30 @@ describe("batchDuplicateStudysets images", () => {
         }
         expect(copies).toHaveLength(2);
         expect(new Set(copies.map((c) => c.Key)).size).toBe(2);
+    });
+});
+
+describe("duplicating a hidden set (#169)", () => {
+    it("single duplicate writes a copy publish refuses", async () => {
+        const puts = fakeDynamo(hiddenSource);
+
+        const res = await invoke(duplicateStudyset, { studysetUUID: "src" });
+
+        expect(res.statusCode).toBe(200);
+        expect(puts).toHaveLength(1);
+        expectUnpublishable(puts[0]);
+    });
+
+    it("batch duplicate writes copies publish refuses", async () => {
+        const puts = fakeDynamo(hiddenSource);
+
+        const res = await invoke(batchDuplicateStudysets, { studysetUUIDs: ["a", "b"] });
+
+        expect(res.statusCode).toBe(200);
+        expect(puts).toHaveLength(2);
+        for (const put of puts) {
+            expectUnpublishable(put);
+        }
     });
 });
 

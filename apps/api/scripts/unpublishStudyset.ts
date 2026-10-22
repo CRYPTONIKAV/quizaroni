@@ -7,7 +7,9 @@
  * and its owner can't republish it. Content is not deleted.
  *
  * There is no un-hide tool: to restore a set, remove its `moderation`
- * attribute by hand; the owner can then publish it again.
+ * attribute by hand; the owner can then publish it again. Copies the owner
+ * made while it was hidden carry the same `moderation` (#169) and stay hidden
+ * until it is removed from them too.
  *
  * The set is always looked up on the public index by STUDYSET_UUID. For a set
  * that isn't published, pass its owner as USER_UUID to hide it anyway; for a
