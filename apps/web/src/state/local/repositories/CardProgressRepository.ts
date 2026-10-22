@@ -1,10 +1,14 @@
 import { getDatabase, type LocalCardProgress } from '../db';
-import type { CardProgress, UUID } from 'shared/types';
+import type { CardProgress, Studyset, UUID } from 'shared/types';
+import {
+    migrateProgressToFsrs,
+    type LegacySm2Progress,
+} from 'shared/utilities/srs';
 
 const LEGACY_KEY = 'study-session-storage';
 const MIGRATION_FLAG = 'srs-progress-migrated-v1';
 
-// Repository for SM-2 card progress - always hits local Dexie DB.
+// Repository for FSRS card progress - always hits local Dexie DB.
 // Local-only for now (no backend sync); rows are marked pending for a future sync layer.
 export class CardProgressRepository {
     private db = getDatabase();
@@ -47,6 +51,55 @@ export class CardProgressRepository {
         return due.length;
     }
 
+    // Due counts for the given library. Progress rows for sets or cards that
+    // are no longer in it are skipped. Sets come out ordered by their most
+    // overdue card, because the query walks the nextReview index.
+    async getDueCountsBySet(
+        studysets: readonly Pick<Studyset, 'studysetUUID' | 'cards'>[],
+        now: Date = new Date()
+    ): Promise<Map<UUID, number>> {
+        await this.ensureMigrated();
+        const cardsBySet = new Map<UUID, Set<UUID>>();
+        for (const { studysetUUID, cards } of studysets) {
+            const ids = new Set<UUID>();
+            // The library is only loosely validated, so skip malformed cards.
+            for (const card of cards as unknown[]) {
+                const cardUUID = (card as { cardUUID?: unknown } | null)
+                    ?.cardUUID;
+                if (typeof cardUUID === 'string') ids.add(cardUUID);
+            }
+            cardsBySet.set(studysetUUID, ids);
+        }
+
+        const due = await this.db.cardProgress
+            .where('nextReview')
+            .belowOrEqual(now.toISOString())
+            .toArray();
+        const counts = new Map<UUID, number>();
+        for (const { cardUUID, studysetUUID } of due) {
+            if (!cardsBySet.get(studysetUUID)?.has(cardUUID)) continue;
+            counts.set(studysetUUID, (counts.get(studysetUUID) ?? 0) + 1);
+        }
+        return counts;
+    }
+
+    // Latest lastStudied per set, in epoch ms. Legacy rows with no set and
+    // timestamps that don't parse are skipped.
+    async getLastStudiedBySet(): Promise<Map<UUID, number>> {
+        await this.ensureMigrated();
+        const rows = await this.db.cardProgress.toArray();
+        const latest = new Map<UUID, number>();
+        for (const { studysetUUID, lastStudied } of rows) {
+            if (!studysetUUID) continue;
+            const time = Date.parse(lastStudied);
+            if (!Number.isFinite(time)) continue;
+            if (time > (latest.get(studysetUUID) ?? -Infinity)) {
+                latest.set(studysetUUID, time);
+            }
+        }
+        return latest;
+    }
+
     // ===== Write =====
 
     async upsert(
@@ -82,18 +135,20 @@ export class CardProgressRepository {
             if (raw) {
                 const parsed = JSON.parse(raw);
                 // zustand persist shape: { state: { cardProgress: [[uuid, progress], ...] } }
-                const entries: [string, CardProgress][] =
+                const entries: [string, LegacySm2Progress][] =
                     parsed?.state?.cardProgress ?? [];
                 const rows: LocalCardProgress[] = entries
                     .map(([, p]) => p)
                     .filter((p) => p && p.cardUUID)
-                    .map((p) => ({
-                        ...p,
-                        // studysetUUID was not tracked in the legacy Map; mark unknown.
-                        studysetUUID: '',
-                        _syncStatus: 'pending' as const,
-                        _lastModified: Date.now(),
-                    }));
+                    .map((p) =>
+                        migrateProgressToFsrs({
+                            ...p,
+                            // studysetUUID was not tracked in the legacy Map; mark unknown.
+                            studysetUUID: '',
+                            _syncStatus: 'pending' as const,
+                            _lastModified: Date.now(),
+                        })
+                    );
                 if (rows.length > 0) {
                     await this.db.cardProgress.bulkPut(rows);
                 }

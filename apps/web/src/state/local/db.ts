@@ -8,6 +8,7 @@ import type {
     GamificationState,
 } from 'shared/types';
 import type { AIMessage } from 'shared/ai/providers';
+import { migrateProgressToFsrs } from 'shared/utilities/srs';
 
 // Local-first versions of types with sync metadata
 export interface LocalStudyset extends Studyset {
@@ -73,7 +74,7 @@ interface QuizaroniDatabase extends Dexie {
 }
 
 const DB_NAME = 'quizaroni_v1';
-const DB_VERSION = 4;
+const DB_VERSION = 5;
 
 let dbInstance: QuizaroniDatabase | null = null;
 
@@ -106,7 +107,7 @@ export function getDatabase(): QuizaroniDatabase {
         syncQueue: '++id, entityType, entityId, createdAt',
     });
 
-    db.version(DB_VERSION).stores({
+    db.version(4).stores({
         studysets:
             'studysetUUID, userUUID, _syncStatus, _lastModified, labels, lastViewed',
         users: 'userUUID, _syncStatus, _lastModified',
@@ -118,6 +119,29 @@ export function getDatabase(): QuizaroniDatabase {
         aiChatHistory: 'studysetUUID, updatedAt',
         syncQueue: '++id, entityType, entityId, createdAt',
     });
+
+    // v5: card progress moves from SM-2 to FSRS state; indexes are unchanged.
+    db.version(DB_VERSION)
+        .stores({
+            studysets:
+                'studysetUUID, userUUID, _syncStatus, _lastModified, labels, lastViewed',
+            users: 'userUUID, _syncStatus, _lastModified',
+            sessions: 'sessionUUID, studysetUUID, completedAt, _syncStatus',
+            cardProgress:
+                'cardUUID, studysetUUID, nextReview, _syncStatus, [studysetUUID+nextReview]',
+            gamification: 'id',
+            customAchievements: 'id, unlockedAt',
+            aiChatHistory: 'studysetUUID, updatedAt',
+            syncQueue: '++id, entityType, entityId, createdAt',
+        })
+        .upgrade((tx) =>
+            tx
+                .table('cardProgress')
+                .toCollection()
+                .modify((row, ctx) => {
+                    ctx.value = migrateProgressToFsrs(row);
+                })
+        );
 
     dbInstance = db;
     return db;
@@ -199,7 +223,9 @@ export async function importAllData(data: {
                 await db.sessions.bulkPut(data.sessions);
             }
             if (data.cardProgress?.length) {
-                await db.cardProgress.bulkPut(data.cardProgress);
+                await db.cardProgress.bulkPut(
+                    data.cardProgress.map(migrateProgressToFsrs)
+                );
             }
             if (data.gamification?.length) {
                 await db.gamification.bulkPut(data.gamification);

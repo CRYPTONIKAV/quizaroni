@@ -87,7 +87,11 @@ export default defineConfig({
                 globPatterns: [
                     '**/*.{js,css,html,ico,png,svg,wasm,json,woff,woff2,ttf,eot}',
                 ],
-                globIgnores: ['**/splash/**', '**/screenshot-*.png'],
+                globIgnores: [
+                    '**/splash/**',
+                    '**/screenshot-*.png',
+                    '**/og-image.png',
+                ],
                 navigateFallback: '/index.html',
                 navigateFallbackDenylist: [/^\/api/, /^\/sitemap\.xml/],
                 runtimeCaching: [

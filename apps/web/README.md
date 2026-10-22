@@ -4,7 +4,7 @@
 
 A flashcard and quiz study application. Create study sets, organize cards with labels and notes, study with multiple modes, and share publicly.
 
-Live: [quizaroni.netlify.app](https://quizaroni.netlify.app)
+Live: [quizaroni.yusufaf.dev](https://quizaroni.yusufaf.dev)
 
 ## Tech Stack
 

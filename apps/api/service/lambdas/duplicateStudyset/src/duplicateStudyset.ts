@@ -4,16 +4,20 @@ import {
     Handler,
 } from "aws-lambda";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { S3Client } from "@aws-sdk/client-s3";
 import { DynamoDBDocumentClient, GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { randomUUID } from "crypto";
 import { AuthorizerContext } from "models/auth";
 import { removeKeys } from "resources/dynamo/utilities";
 import { Studyset } from "models/studysets";
+import { buildDuplicate } from "utilities/duplicateStudyset";
+import { copyCardFiles } from "utilities/cardFiles";
 
-const { mainTable = "" } = process.env;
+const { mainTable = "", mainBucket = "" } = process.env;
 
 const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
+const s3Client = new S3Client({});
 
 type RequestBody = {
     studysetUUID: string;
@@ -49,24 +53,13 @@ export const handler: Handler = async (
         const newStudysetUUID = randomUUID();
         const timestamp = new Date().toISOString();
 
-        const duplicatedStudyset = structuredClone(studyset);
-        duplicatedStudyset.SK = `studyset#${newStudysetUUID}`;
-        duplicatedStudyset.title = `${duplicatedStudyset.title} Copy`;
-        duplicatedStudyset.createdAt = timestamp;
-        duplicatedStudyset.updatedAt = timestamp;
-        duplicatedStudyset.studysetUUID = newStudysetUUID;
-        duplicatedStudyset.cards = duplicatedStudyset.cards.map(card => {
-            const newCardUUID = randomUUID();
-            const newNotes = card.notes.map(note => ({
-                ...note,
-                noteUUID: randomUUID()
-            }));
-    
-            return {
-                ...card,
-                cardUUID: newCardUUID,
-                notes: newNotes
-            };
+        const duplicatedStudyset = buildDuplicate(studyset, newStudysetUUID, timestamp);
+        duplicatedStudyset.cards = await copyCardFiles({
+            s3Client,
+            bucket: mainBucket,
+            cards: duplicatedStudyset.cards,
+            studysetUUID: newStudysetUUID,
+            ownerUUID: userUUID,
         });
 
         const putCommand = new PutCommand({

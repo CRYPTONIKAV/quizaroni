@@ -320,6 +320,7 @@
         "nameCannotBeEmpty": "Name cannot be empty",
         "categoryAlreadyExists": "Category already exists",
         "noUnusedCategories": "No unused categories to delete",
+        "deleteUnusedFailed": "Failed to delete unused categories. Please try again.",
         "noCategoriesYet": "No categories yet",
         "createFirstCategory": "Use the input above to create your first category",
         "cardCount_one": "{{count}} card",
@@ -474,6 +475,8 @@
         "createdBy": "Created by {{username}}",
         "term": "Term",
         "definition": "Definition",
+        "termImage": "Term image",
+        "definitionImage": "Definition image",
         "cards_one": "{{count}} card",
         "cards_other": "{{count}} cards",
         "ctaTitle": "Want to study this set?",
@@ -496,6 +499,8 @@
         "addLabelsPlaceholder": "Type and press Enter to add labels",
         "saveChanges": "Save Changes",
         "advanced": "Advanced",
+        "collapseAdvanced": "Collapse advanced",
+        "expandAdvanced": "Expand advanced",
         "addBlankCards": "Add blank cards:",
         "add": "Add",
         "clearEmptyCards": "Clear empty cards:",
@@ -664,5 +669,44 @@
         "install": "Install",
         "installIosInstructions": "Tap Share, then \"Add to Home Screen\" to install Quizaroni.",
         "dismissInstall": "Dismiss install prompt"
+    },
+    "combineSets": {
+        "goBack": "Go back",
+        "removeSet": "Remove {{title}} from combination",
+        "addSet": "Add {{title}} to combination"
+    },
+    "subjects": {
+        "languages": "Languages",
+        "math": "Math",
+        "science": "Science",
+        "medicine-health": "Medicine & health",
+        "history": "History",
+        "geography": "Geography",
+        "social-sciences": "Social sciences",
+        "law": "Law",
+        "computer-science": "Computer science",
+        "business-economics": "Business & economics",
+        "arts-humanities": "Arts & humanities",
+        "other": "Other"
+    },
+    "publish": {
+        "menuPublish": "Publish to Explore",
+        "menuManage": "Manage publishing",
+        "title": "Publish to Explore",
+        "publishedStatus": "This set is published in Explore.",
+        "subjectLabel": "Subject",
+        "subjectPlaceholder": "Choose a subject",
+        "disclosure": "Anyone can find this set in Explore and search engines. Notes and labels stay private.",
+        "publish": "Publish",
+        "update": "Save subject",
+        "unpublish": "Unpublish",
+        "success": "Published to Explore",
+        "unpublishSuccess": "Removed from Explore",
+        "errors": {
+            "invalidSubject": "Choose a subject.",
+            "notEnoughCards": "Add at least {{required}} cards with both a term and a definition. This set has {{actual}}.",
+            "hidden": "This set was removed by moderators and can't be published.",
+            "generic": "Something went wrong. Try again."
+        }
     }
 }

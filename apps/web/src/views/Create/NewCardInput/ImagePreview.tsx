@@ -26,6 +26,13 @@ const ImagePreviewContainer = styled('div')(({ theme }) => ({
         transform: 'translateY(-0.125rem)',
         boxShadow: theme.shadows[4],
     },
+    // :focus-visible rather than :focus-within so a mouse click doesn't leave
+    // the overlay pinned open after the pointer leaves.
+    '&:hover [data-preview-actions], &:has(:focus-visible) [data-preview-actions]':
+        {
+            opacity: 1,
+            pointerEvents: 'auto',
+        },
 }));
 
 const ImageElement = styled('img')({
@@ -34,7 +41,7 @@ const ImageElement = styled('img')({
     objectFit: 'cover',
 });
 
-const ActionOverlay = styled('div')(({ theme }) => ({
+const ActionOverlay = styled('div')({
     position: 'absolute',
     top: 0,
     left: 0,
@@ -46,11 +53,10 @@ const ActionOverlay = styled('div')(({ theme }) => ({
     justifyContent: 'center',
     gap: '0.5rem',
     opacity: 0,
+    // Faded out but still mounted so the buttons stay in the tab order.
+    pointerEvents: 'none',
     transition: 'opacity 0.2s ease',
-    '&:hover': {
-        opacity: 1,
-    },
-}));
+});
 
 const FileInfo = styled('div')(({ theme }) => ({
     position: 'absolute',
@@ -104,7 +110,6 @@ const ImagePreview = ({
     isDeleting = false,
 }: ImagePreviewProps) => {
     const [imageError, setImageError] = useState(false);
-    const [showActions, setShowActions] = useState(false);
 
     const handleDelete = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -119,10 +124,7 @@ const ImagePreview = ({
     };
 
     return (
-        <ImagePreviewContainer
-            onMouseEnter={() => setShowActions(true)}
-            onMouseLeave={() => setShowActions(false)}
-        >
+        <ImagePreviewContainer>
             {imageError ? (
                 <BrokenImageContainer>
                     <BrokenImage fontSize="large" />
@@ -136,13 +138,14 @@ const ImagePreview = ({
                         onError={() => setImageError(true)}
                         loading="lazy"
                     />
-                    {showActions && !isDeleting && (
-                        <ActionOverlay>
+                    {!isDeleting && (
+                        <ActionOverlay data-preview-actions="">
                             <IconButton
                                 onClick={handleDelete}
                                 size="small"
                                 sx={{ color: 'white' }}
                                 title="Delete image"
+                                aria-label="Delete image"
                             >
                                 <DeleteIcon />
                             </IconButton>
@@ -152,6 +155,7 @@ const ImagePreview = ({
                                     size="small"
                                     sx={{ color: 'white' }}
                                     title="Replace image"
+                                    aria-label="Replace image"
                                 >
                                     <SwapIcon />
                                 </IconButton>

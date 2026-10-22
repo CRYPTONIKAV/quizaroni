@@ -1,4 +1,5 @@
 import type { Context } from '@netlify/edge-functions';
+import { resolveSite } from '../lib/site.ts';
 
 // Netlify Edge Functions run on Deno, not Node. This directory is outside
 // tsconfig.json's `include`, so it gets no ambient Deno types — declare just
@@ -28,7 +29,7 @@ type PublicSummary = {
     updatedAt?: string;
 };
 
-export default async (request: Request, _context: Context) => {
+export default async (request: Request, context: Context) => {
     // Read lazily inside the handler — see the note in og-meta.ts about
     // Netlify's build-time bundling pass running before env vars exist.
     // Deployed AWS API Gateway (matches BASE_API_URL in the web app).
@@ -36,8 +37,6 @@ export default async (request: Request, _context: Context) => {
     if (!API_BASE) {
         throw new Error('API_BASE_URL env var is not set');
     }
-
-    const origin = new URL(request.url).origin;
 
     let studysets: PublicSummary[] = [];
     try {
@@ -55,13 +54,14 @@ export default async (request: Request, _context: Context) => {
         // crawlers get a well-formed document rather than an error.
     }
 
+    const site = resolveSite(request, context);
     const urls: string[] = [
-        `  <url>\n    <loc>${escapeXml(origin)}/</loc>\n  </url>`,
+        `  <url>\n    <loc>${escapeXml(site.origin)}/</loc>\n  </url>`,
     ];
 
     for (const set of studysets) {
         if (!set.studysetUUID) continue;
-        const loc = `${origin}/view/${encodeURIComponent(set.studysetUUID)}`;
+        const loc = `${site.origin}/view/${encodeURIComponent(set.studysetUUID)}`;
         const lastmod = set.updatedAt
             ? `\n    <lastmod>${escapeXml(set.updatedAt)}</lastmod>`
             : '';
@@ -74,12 +74,17 @@ export default async (request: Request, _context: Context) => {
         '\n'
     )}\n</urlset>\n`;
 
-    return new Response(xml, {
-        headers: {
-            'content-type': 'application/xml; charset=utf-8',
-            // Rebuild at most hourly at the edge; cheap and fresh enough for a
-            // sitemap crawlers re-fetch on their own schedule.
-            'cache-control': 'public, max-age=0, s-maxage=3600',
-        },
+    const headers = new Headers({
+        'content-type': 'application/xml; charset=utf-8',
+        // Netlify doesn't cache edge-function output without
+        // `cache = "manual"`, so this runs (and calls the API) on every
+        // request; s-maxage only lets shared caches downstream reuse it for
+        // an hour, which is fresh enough for a sitemap.
+        'cache-control': 'public, max-age=0, s-maxage=3600',
     });
+    if (!site.indexable) {
+        headers.set('x-robots-tag', 'noindex');
+    }
+
+    return new Response(xml, { headers });
 };

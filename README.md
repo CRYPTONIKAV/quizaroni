@@ -4,17 +4,24 @@
 
 # Quizaroni
 
-A flashcard / quiz study application. Create study sets, attach notes and
-files, and study them — backed by a fully serverless AWS backend.
+Turn any topic into flashcards you'll actually enjoy studying, with five study
+modes, real spaced repetition, offline access, and public sharing. Free.
 
-This is a **pnpm monorepo**:
+**Try it: [quizaroni.yusufaf.dev](https://quizaroni.yusufaf.dev)**
+
+![Quizaroni landing page](./apps/web/public/og-image.png)
+
+## Development
+
+A React frontend backed by a fully serverless AWS backend, in a
+**pnpm monorepo**:
 
 | Workspace  | Path        | Stack                                                        |
 | ---------- | ----------- | ----------------------------------------------------------- |
 | Frontend   | `apps/web`  | React 18 · TypeScript · Vite · Material UI · AWS Amplify     |
 | Backend    | `apps/api`  | AWS CDK · Lambda · API Gateway (HTTP) · DynamoDB · S3 · SES  |
 
-## Architecture
+### Architecture
 
 ```
  React (Amplify/Cognito auth)
@@ -31,7 +38,7 @@ This is a **pnpm monorepo**:
 Everything in `apps/api` is defined as infrastructure-as-code with the AWS CDK
 and deployed as a single CloudFormation stack.
 
-## Quick start
+### Quick start
 
 ```bash
 pnpm install
@@ -47,7 +54,7 @@ pnpm synth:api                     # validate the CloudFormation template
 pnpm deploy:api                    # deploy to your AWS account
 ```
 
-## Configuration
+### Configuration
 
 No account-specific identifiers or secrets are committed. Supply your own via
 the untracked `.env` files:
@@ -56,7 +63,7 @@ the untracked `.env` files:
   optional Google OAuth credentials. See `apps/api/.env.example`.
 - `apps/web/.env` — API base URL. See `apps/web/.env.example`.
 
-## Repo scripts
+### Repo scripts
 
 Run from the root:
 

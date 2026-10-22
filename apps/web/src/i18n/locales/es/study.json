@@ -54,8 +54,10 @@
         "flipCard": "Voltear Tarjeta",
         "nextCard": "Siguiente Tarjeta",
         "previousCard": "Tarjeta Anterior",
+        "finish": "Terminar",
         "shuffle": "Mezclar",
-        "showHint": "Mostrar Pista"
+        "showHint": "Mostrar Pista",
+        "submitAnswer": "Enviar respuesta"
     },
     "progress": {
         "cardsStudied": "Tarjetas Estudiadas",
@@ -87,8 +89,8 @@
         "ratePrompt": "¿Qué tan bien lo recordaste?"
     },
     "addCardsToUnlock": "Agrega tarjetas para desbloquear este modo",
+    "loading": "Cargando...",
     "typeWriteStudy": {
-        "loading": "Cargando...",
         "typeDefinitionBelow": "Escribe la definición abajo:",
         "answerPlaceholder": "Escribe tu respuesta...",
         "useHint": "Usar pista ({{remaining}} restantes)",
@@ -96,7 +98,6 @@
         "hint1FirstLetter": "Pista 1: La primera letra es \"{{letter}}\"",
         "hint2FirstThree": "Pista 2: Las primeras 3 letras son \"{{letters}}\"",
         "hint3Length": "Pista 3: La longitud es de {{count}} caracteres",
-        "submitAnswer": "Enviar respuesta",
         "difficultyLine": "Dificultad: {{level}} | Pulsa Enter para enviar",
         "difficultyEasy": "fácil",
         "difficultyMedium": "media",
@@ -117,5 +118,46 @@
         "newAchievements": "🎉 ¡Nuevos Logros Desbloqueados!",
         "backToSet": "Volver al Set",
         "studyAgain": "Estudiar de Nuevo"
+    },
+    "header": {
+        "backToStudySet": "Volver al conjunto de estudio",
+        "streak": "Racha de {{count}}",
+        "score": "Puntos: {{score}}",
+        "progress": "Tarjeta {{current}} de {{total}}",
+        "audioOn": "Audio activado",
+        "audioOff": "Audio desactivado",
+        "settings": "Ajustes"
+    },
+    "matching": {
+        "time": "Tiempo: {{time}}",
+        "matched": "Emparejadas: {{matched}}/{{total}}",
+        "terms": "Términos",
+        "definitions": "Definiciones"
+    },
+    "multipleChoice": {
+        "correctFeedback": "✓ ¡Correcto! ¡Buen trabajo!",
+        "incorrectFeedback": "✗ Incorrecto. La respuesta correcta era: \"{{answer}}\"",
+        "optionPlaceholder": "Opción {{n}}"
+    },
+    "settings": {
+        "title": "Ajustes de estudio",
+        "cardSection": "Ajustes de tarjetas",
+        "shuffleCards": "Mezclar tarjetas",
+        "autoAdvance": "Avanzar automáticamente",
+        "hideImages": "Ocultar imágenes",
+        "audioSection": "Ajustes de audio",
+        "tts": "Activar lectura de texto (TTS)",
+        "timerSection": "Ajustes de temporizador",
+        "timedMode": "Activar modo contrarreloj",
+        "timePerCard": "Tiempo por tarjeta: {{seconds}} segundos",
+        "difficultySection": "Nivel de dificultad",
+        "difficultyEasy": "Fácil",
+        "difficultyMedium": "Media",
+        "difficultyHard": "Difícil",
+        "difficultyEasyDesc": "Coincidencias más permisivas, más pistas disponibles",
+        "difficultyMediumDesc": "Coincidencias y pistas equilibradas",
+        "difficultyHardDesc": "Coincidencias estrictas, menos pistas disponibles",
+        "saveSettings": "Guardar ajustes",
+        "secondsShort": "{{seconds}} s"
     }
 }

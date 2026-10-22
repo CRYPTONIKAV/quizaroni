@@ -567,11 +567,12 @@ const FlashcardsStudy = ({ studysetId, reviewMode = false }: Props) => {
                     }}
                 >
                     {/* Previous Button */}
-                    <Tooltip title="Previous Card">
+                    <Tooltip title={t('actions.previousCard')}>
                         <span>
                             <IconButton
                                 onClick={handlePrevious}
                                 disabled={isFirstCard}
+                                aria-label={t('actions.previousCard')}
                                 color="primary"
                                 sx={{ fontSize: '3rem' }}
                             >
@@ -848,11 +849,22 @@ const FlashcardsStudy = ({ studysetId, reviewMode = false }: Props) => {
                     </AnimatePresence>
 
                     {/* Next Button */}
-                    <Tooltip title={isLastCard ? 'Finish' : 'Next Card'}>
+                    <Tooltip
+                        title={
+                            isLastCard
+                                ? t('actions.finish')
+                                : t('actions.nextCard')
+                        }
+                    >
                         <span>
                             <IconButton
                                 onClick={handleNext}
                                 disabled={!hasRated}
+                                aria-label={
+                                    isLastCard
+                                        ? t('actions.finish')
+                                        : t('actions.nextCard')
+                                }
                                 color="primary"
                                 sx={{ fontSize: '3rem' }}
                             >
@@ -872,7 +884,7 @@ const FlashcardsStudy = ({ studysetId, reviewMode = false }: Props) => {
                     paddingBottom: 'max(0.5rem, var(--safe-area-bottom))',
                 }}
             >
-                <Tooltip title="Flip Card">
+                <Tooltip title={t('actions.flipCard')}>
                     <IconButton
                         onClick={handleFlip}
                         color="primary"
@@ -884,8 +896,8 @@ const FlashcardsStudy = ({ studysetId, reviewMode = false }: Props) => {
                 <Tooltip
                     title={
                         activeSession.settings.audioEnabled
-                            ? 'Audio On'
-                            : 'Audio Off'
+                            ? t('header.audioOn')
+                            : t('header.audioOff')
                     }
                 >
                     <IconButton

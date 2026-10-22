@@ -4,6 +4,7 @@ import {
     Handler,
 } from 'aws-lambda';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { S3Client } from '@aws-sdk/client-s3';
 import {
     DynamoDBDocumentClient,
     GetCommand,
@@ -13,11 +14,14 @@ import { randomUUID } from 'crypto';
 import { AuthorizerContext } from 'models/auth';
 import { removeKeys } from 'resources/dynamo/utilities';
 import { Studyset } from 'models/studysets';
+import { buildDuplicate } from 'utilities/duplicateStudyset';
+import { copyCardFiles } from 'utilities/cardFiles';
 
-const { mainTable = '' } = process.env;
+const { mainTable = '', mainBucket = '' } = process.env;
 
 const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
+const s3Client = new S3Client({});
 
 type RequestBody = {
     studysetUUIDs: string[];
@@ -40,7 +44,15 @@ export const handler: Handler = async (
             duplicateIndividualStudyset({ studysetUUID, username, userUUID })
         );
 
-        await Promise.allSettled(duplicateStudysetPromises);
+        const results = await Promise.allSettled(duplicateStudysetPromises);
+        results.forEach((result, i) => {
+            if (result.status === 'rejected') {
+                console.error(
+                    `Failed to duplicate studyset ${studysetUUIDs[i]}:`,
+                    result.reason
+                );
+            }
+        });
 
         return {
             statusCode: 200,
@@ -90,25 +102,17 @@ const duplicateIndividualStudyset = async ({
     const newStudysetUUID = randomUUID();
     const timestamp = new Date().toISOString();
 
-    const duplicatedStudyset = structuredClone(studyset);
-    duplicatedStudyset.SK = `studyset#${newStudysetUUID}`;
-    duplicatedStudyset.title = `${duplicatedStudyset.title} Copy`;
-    duplicatedStudyset.createdAt = timestamp;
-    duplicatedStudyset.updatedAt = timestamp;
-    duplicatedStudyset.lastViewed = timestamp;
-    duplicatedStudyset.studysetUUID = newStudysetUUID;
-    duplicatedStudyset.cards = duplicatedStudyset.cards.map((card) => {
-        const newCardUUID = randomUUID();
-        const newNotes = card.notes.map((note) => ({
-            ...note,
-            noteUUID: randomUUID(),
-        }));
-
-        return {
-            ...card,
-            cardUUID: newCardUUID,
-            notes: newNotes,
-        };
+    const duplicatedStudyset = buildDuplicate(
+        studyset,
+        newStudysetUUID,
+        timestamp
+    );
+    duplicatedStudyset.cards = await copyCardFiles({
+        s3Client,
+        bucket: mainBucket,
+        cards: duplicatedStudyset.cards,
+        studysetUUID: newStudysetUUID,
+        ownerUUID: userUUID,
     });
 
     const putCommand = new PutCommand({

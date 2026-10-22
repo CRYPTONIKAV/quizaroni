@@ -54,8 +54,10 @@
         "flipCard": "Flip Card",
         "nextCard": "Next Card",
         "previousCard": "Previous Card",
+        "finish": "Finish",
         "shuffle": "Shuffle",
-        "showHint": "Show Hint"
+        "showHint": "Show Hint",
+        "submitAnswer": "Submit Answer"
     },
     "progress": {
         "cardsStudied": "Cards Studied",
@@ -87,8 +89,8 @@
         "ratePrompt": "How well did you recall this?"
     },
     "addCardsToUnlock": "Add cards to unlock this mode",
+    "loading": "Loading...",
     "typeWriteStudy": {
-        "loading": "Loading...",
         "typeDefinitionBelow": "Type the definition below:",
         "answerPlaceholder": "Enter your answer...",
         "useHint": "Use Hint ({{remaining}} remaining)",
@@ -96,7 +98,6 @@
         "hint1FirstLetter": "Hint 1: First letter is \"{{letter}}\"",
         "hint2FirstThree": "Hint 2: First 3 letters are \"{{letters}}\"",
         "hint3Length": "Hint 3: Length is {{count}} characters",
-        "submitAnswer": "Submit Answer",
         "difficultyLine": "Difficulty: {{level}} | Press Enter to submit",
         "difficultyEasy": "easy",
         "difficultyMedium": "medium",
@@ -117,5 +118,46 @@
         "newAchievements": "🎉 New Achievements Unlocked!",
         "backToSet": "Back to Set",
         "studyAgain": "Study Again"
+    },
+    "header": {
+        "backToStudySet": "Back to Study Set",
+        "streak": "{{count}} Streak",
+        "score": "Score: {{score}}",
+        "progress": "Card {{current}} of {{total}}",
+        "audioOn": "Audio On",
+        "audioOff": "Audio Off",
+        "settings": "Settings"
+    },
+    "matching": {
+        "time": "Time: {{time}}",
+        "matched": "Matched: {{matched}}/{{total}}",
+        "terms": "Terms",
+        "definitions": "Definitions"
+    },
+    "multipleChoice": {
+        "correctFeedback": "✓ Correct! Great job!",
+        "incorrectFeedback": "✗ Incorrect. The correct answer was: \"{{answer}}\"",
+        "optionPlaceholder": "Option {{n}}"
+    },
+    "settings": {
+        "title": "Study Settings",
+        "cardSection": "Card Settings",
+        "shuffleCards": "Shuffle Cards",
+        "autoAdvance": "Auto-Advance to Next Card",
+        "hideImages": "Hide Card Images",
+        "audioSection": "Audio Settings",
+        "tts": "Enable Text-to-Speech (TTS)",
+        "timerSection": "Timer Settings",
+        "timedMode": "Enable Timed Mode",
+        "timePerCard": "Time per Card: {{seconds}} seconds",
+        "difficultySection": "Difficulty Level",
+        "difficultyEasy": "Easy",
+        "difficultyMedium": "Medium",
+        "difficultyHard": "Hard",
+        "difficultyEasyDesc": "More lenient answer matching, more hints available",
+        "difficultyMediumDesc": "Balanced answer matching and hint availability",
+        "difficultyHardDesc": "Strict answer matching, fewer hints available",
+        "saveSettings": "Save Settings",
+        "secondsShort": "{{seconds}}s"
     }
 }

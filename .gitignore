@@ -22,6 +22,7 @@ apps/api/cdk.out/
 # agent / tooling scratch
 .agents/
 .playwright-mcp/
+**/docs/superpowers/
 
 # misc
 .DS_Store

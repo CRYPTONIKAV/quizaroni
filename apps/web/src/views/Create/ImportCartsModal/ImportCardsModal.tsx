@@ -751,6 +751,9 @@ const ImportCardsModal = ({
                                         <span>
                                             <IconButton
                                                 size="small"
+                                                aria-label={t(
+                                                    'create.clearEditor'
+                                                )}
                                                 onClick={handleReset}
                                                 disabled={
                                                     isProcessing ||

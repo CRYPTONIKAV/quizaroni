@@ -72,9 +72,8 @@ const CreateSet = (props: Props) => {
     } = useGetStudyset(
         { studysetUUID: studysetUUID ?? '' },
         // /create has no :id — don't fire the fetch at all rather than send
-        // studysetUUID: '' (the API 500s on that, and the response body gets
-        // treated as success data since the fetch wrapper doesn't check
-        // response.ok, crashing the cards.map() below on an undefined list).
+        // studysetUUID: '' (the API 404s on that, which would put /create in
+        // an error state for nothing).
         { enabled: !!studysetUUID }
     );
     const selectedStudyset = studysetResponse?.studyset ?? ({} as Studyset);

@@ -173,13 +173,20 @@ export type StudySessionResult = {
     achievements: string[];
 };
 
+export type SrsState = 'New' | 'Learning' | 'Review' | 'Relearning';
+
 export type CardProgress = {
     cardUUID: UUID;
     lastStudied: Timestamp;
     nextReview: Timestamp;
-    easeFactor: number;
-    interval: number;
-    repetitions: number;
+    // FSRS memory state (ts-fsrs Card); see shared/utilities/srs.ts
+    stability: number;
+    difficulty: number;
+    state: SrsState;
+    reps: number;
+    lapses: number;
+    scheduledDays: number;
+    learningSteps: number;
     masteryLevel: 'new' | 'learning' | 'review' | 'mastered';
 };
 

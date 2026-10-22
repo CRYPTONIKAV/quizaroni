@@ -1,0 +1,41 @@
+{
+    "title": "Explorar",
+    "forYou": {
+        "heading": "Para ti",
+        "loading": "Cargando tus sets…",
+        "error": "No pudimos cargar tus sets.",
+        "retry": "Reintentar"
+    },
+    "tile": {
+        "jumpBackIn": "Continúa donde lo dejaste",
+        "favorite": "Favorito",
+        "revisit": "Para retomar",
+        "previews": "Términos de este set",
+        "untitled": "Set sin título",
+        "cardCount_one": "{{count}} tarjeta",
+        "cardCount_other": "{{count}} tarjetas",
+        "due": {
+            "eyebrow": "Pendiente de repaso",
+            "title_one": "{{count}} tarjeta pendiente en {{sets}}",
+            "title_other": "{{count}} tarjetas pendientes en {{sets}}",
+            "sets_one": "{{count}} set",
+            "sets_other": "{{count}} sets",
+            "local": "En este dispositivo",
+            "review": "Repasar"
+        },
+        "streak": {
+            "eyebrow": "Racha",
+            "title_one": "Racha de {{count}} día",
+            "title_other": "Racha de {{count}} días",
+            "atRisk_one": "Estudia hoy para mantener tu racha de {{count}} día",
+            "atRisk_other": "Estudia hoy para mantener tu racha de {{count}} días",
+            "studiedToday": "Hoy ya estudiaste",
+            "lastStudiedYesterday": "Estudiaste por última vez ayer"
+        }
+    },
+    "empty": {
+        "heading": "Aún no tienes sets de estudio",
+        "body": "Crea tu primer set y aparecerá aquí.",
+        "createSet": "Crear set"
+    }
+}

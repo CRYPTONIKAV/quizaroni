@@ -151,7 +151,7 @@ export const CategoriesManageTab = ({
                             size="small"
                             startIcon={<CleanIcon />}
                             onClick={onDeleteUnused}
-                            disabled={categories.length === 0}
+                            disabled={categories.length === 0 || isLoading}
                         >
                             {t('categories.deleteUnused')}
                         </Button>

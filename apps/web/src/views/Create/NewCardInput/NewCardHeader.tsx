@@ -124,6 +124,7 @@ const NewCardHeader = ({
                     <IconButton
                         ref={textColorButtonRef}
                         onClick={toggleTextColorPicker}
+                        aria-label="Change card text color"
                         sx={showTextColorPicker ? colorPickerActiveStyling : {}}
                     >
                         <FormatColorText fontSize="medium" />
@@ -144,6 +145,7 @@ const NewCardHeader = ({
                     <IconButton
                         ref={backgroundColorButtonRef}
                         onClick={toggleBackgroundColorPicker}
+                        aria-label="Change card background color"
                         sx={
                             showBackgroundColorPicker
                                 ? colorPickerActiveStyling
@@ -178,6 +180,7 @@ const NewCardHeader = ({
                                 setStateCallback,
                             })
                         }
+                        aria-label="Swap term and definition"
                     >
                         <SwapHoriz fontSize="medium" />
                     </IconButton>
@@ -191,6 +194,7 @@ const NewCardHeader = ({
                                 setStateCallback,
                             })
                         }
+                        aria-label="Duplicate card"
                     >
                         <ContentCopy />
                     </IconButton>
@@ -208,6 +212,7 @@ const NewCardHeader = ({
                                 setActionsStack,
                             })
                         }
+                        aria-label="Delete this card"
                     >
                         <Delete fontSize="medium" color="error" />
                     </IconButton>

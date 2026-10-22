@@ -25,6 +25,8 @@ import {
 } from 'shared/constants';
 import { ActionButtonsRow } from '../styles';
 import ControlMenu from './ControlMenu';
+import PublishDialog from '../PublishDialog/PublishDialog';
+import { isPublishEnabled } from 'shared/featureFlags';
 
 type Props = {
     updateMetadataField: any;
@@ -42,6 +44,7 @@ const StudysetActions = (props: Props) => {
     const { setSelectedDialog } = useViewSetsStore();
 
     const [showControlMenu, setShowControlMenu] = useState<boolean>(false);
+    const [showPublishDialog, setShowPublishDialog] = useState(false);
     const controlAnchorRef = useRef(null);
 
     const handleOpenControlMenu = () => {
@@ -222,7 +225,18 @@ const StudysetActions = (props: Props) => {
                 anchorEl={controlAnchorRef.current}
                 selectedStudyset={selectedStudyset}
                 updateMetadataState={updateMetadataState}
+                onOpenPublish={() => {
+                    setShowControlMenu(false);
+                    setShowPublishDialog(true);
+                }}
             />
+            {isPublishEnabled() && selectedStudyset?.studysetUUID && (
+                <PublishDialog
+                    open={showPublishDialog}
+                    onClose={() => setShowPublishDialog(false)}
+                    studyset={selectedStudyset}
+                />
+            )}
         </>
     );
 };
